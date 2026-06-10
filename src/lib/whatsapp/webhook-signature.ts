@@ -1,27 +1,25 @@
-import crypto from 'node:crypto'
-
 /**
  * Verify the HMAC-SHA256 signature Meta attaches to webhook POSTs.
  *
- * Meta signs the raw request body with your App Secret and sends the
- * result in the `x-hub-signature-256: sha256=<hex>` header. Without
- * verification, anyone who knows our webhook URL can POST fabricated
- * status updates and drift broadcast counts arbitrarily.
+ * Uses the Web Crypto API so this module runs on Cloudflare Workers
+ * Edge Runtime without needing the Node.js crypto built-in.
  *
- * Reference:
- *   https://developers.facebook.com/docs/graph-api/webhooks/getting-started#verify-payloads
- *
- * Contract:
- *   `META_APP_SECRET` is **required**. If it's missing we fail closed —
- *   every request is rejected until the operator configures the
- *   secret. A previous version fell open with a warning log, which is
- *   unsafe for a public template: anyone who forgets the env var would
- *   be running a fully spoofable webhook.
+ * crypto.subtle.verify() is timing-safe by spec — no need for a
+ * manual timingSafeEqual workaround.
  */
-export function verifyMetaWebhookSignature(
+
+function hexToBytes(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2)
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(hex.substring(i * 2, i * 2 + 2), 16)
+  }
+  return bytes
+}
+
+export async function verifyMetaWebhookSignature(
   rawBody: string,
   signatureHeader: string | null,
-): boolean {
+): Promise<boolean> {
   const secret = process.env.META_APP_SECRET
   if (!secret) {
     console.error(
@@ -35,13 +33,22 @@ export function verifyMetaWebhookSignature(
   if (!signatureHeader) return false
   if (!signatureHeader.startsWith('sha256=')) return false
 
-  const expected =
-    'sha256=' +
-    crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
+  const sigHex = signatureHeader.slice('sha256='.length)
+  if (sigHex.length % 2 !== 0) return false
 
-  const a = Buffer.from(signatureHeader)
-  const b = Buffer.from(expected)
-  // Bail if lengths differ — timingSafeEqual throws otherwise.
-  if (a.length !== b.length) return false
-  return crypto.timingSafeEqual(a, b)
+  const encoder = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['verify'],
+  )
+
+  return crypto.subtle.verify(
+    'HMAC',
+    key,
+    hexToBytes(sigHex),
+    encoder.encode(rawBody),
+  )
 }

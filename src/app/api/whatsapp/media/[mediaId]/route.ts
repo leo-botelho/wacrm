@@ -45,7 +45,7 @@ export async function GET(
       )
     }
 
-    const accessToken = decrypt(config.access_token)
+    const accessToken = await decrypt(config.access_token)
 
     // Get the download URL from Meta
     const mediaInfo = await getMediaUrl({ mediaId, accessToken })

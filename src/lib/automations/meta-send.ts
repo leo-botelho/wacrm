@@ -84,7 +84,7 @@ async function sendViaMeta(input: SendInput): Promise<{ whatsapp_message_id: str
     throw new Error('WhatsApp not configured for this account')
   }
 
-  const accessToken = decrypt(config.access_token)
+  const accessToken = await decrypt(config.access_token)
 
   const attempt = async (phone: string): Promise<string> => {
     if (input.kind === 'template') {

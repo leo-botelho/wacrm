@@ -77,7 +77,7 @@ export async function engineSendText(
     throw new Error('WhatsApp not configured for this account')
   }
 
-  const accessToken = decrypt(config.access_token)
+  const accessToken = await decrypt(config.access_token)
 
   const attempt = async (phone: string): Promise<string> => {
     const r = await sendTextMessage({
@@ -221,7 +221,7 @@ async function sendInteractiveViaMeta(
     throw new Error('WhatsApp not configured for this account')
   }
 
-  const accessToken = decrypt(config.access_token)
+  const accessToken = await decrypt(config.access_token)
 
   const attempt = async (phone: string): Promise<string> => {
     if (input.kind === 'buttons') {
