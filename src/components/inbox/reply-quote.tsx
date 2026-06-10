@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import type { Message } from "@/types";
 
 interface ReplyQuoteProps {
-  /** Sender label of the quoted message: "You" for our own messages,
+  /** Sender label of the quoted message: "Você" for our own messages,
    *  contact name for customer-sent messages. Caller resolves this — the
    *  quote component doesn't see the parent Message. */
   authorLabel: string;
@@ -41,7 +41,7 @@ export function ReplyQuote({
         <button
           type="button"
           onClick={onDismiss}
-          aria-label="Cancel reply"
+          aria-label="Cancelar resposta"
           className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-slate-700 hover:text-white"
         >
           <X className="h-3.5 w-3.5" />
@@ -56,18 +56,18 @@ export function buildReplyPreview(message: Message): string {
   if (message.content_text) return message.content_text;
   switch (message.content_type) {
     case "image":
-      return "[Image]";
+      return "[Imagem]";
     case "video":
-      return "[Video]";
+      return "[Vídeo]";
     case "audio":
-      return "[Audio]";
+      return "[Áudio]";
     case "document":
-      return "[Document]";
+      return "[Documento]";
     case "location":
-      return "[Location]";
+      return "[Localização]";
     case "template":
-      return "[Template]";
+      return "[Modelo]";
     default:
-      return "[Message]";
+      return "[Mensagem]";
   }
 }

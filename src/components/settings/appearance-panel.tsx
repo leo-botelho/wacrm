@@ -7,27 +7,27 @@ import { THEMES, type ThemeId } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 
 /**
- * Appearance panel — color-theme picker.
+ * Painel de aparência — seletor de tema de cor.
  *
- * Click a card → applies + persists immediately. No save button:
- * the whole change is a single CSS-variable swap on <html>, there's
- * nothing to roll back. The active card carries a check chip + a
- * primary-tinted border so the current pick is obvious.
+ * Clique em um cartão → aplica e persiste imediatamente. Sem botão salvar:
+ * a alteração é uma simples troca de variável CSS em <html>, sem nada
+ * a desfazer. O cartão ativo exibe um chip com check e borda tingida
+ * com a cor primária para destacar a escolha atual.
  *
- * Persistence: localStorage only (device-scoped). The boot script in
- * layout.tsx replays the choice before first paint on subsequent
- * loads.
+ * Persistência: apenas localStorage (escopo por dispositivo). O script
+ * de inicialização em layout.tsx repete a escolha antes do primeiro
+ * render nas visitas seguintes.
  */
 export function AppearancePanel() {
   const { theme, setTheme } = useTheme();
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-white">Color theme</h2>
+        <h2 className="text-lg font-semibold text-white">Tema de cor</h2>
         <p className="mt-1 text-sm text-slate-400">
-          Pick the accent color used across the app. All themes stay
-          dark — only the primary color (buttons, active nav, badges)
-          changes. Saved to this device.
+          Escolha a cor de destaque usada em todo o aplicativo. Todos os temas
+          permanecem escuros — apenas a cor primária (botões, nav ativo, badges)
+          muda. Salvo neste dispositivo.
         </p>
       </div>
 
@@ -68,7 +68,7 @@ function ThemeCard({
       type="button"
       onClick={onPick}
       aria-pressed={isActive}
-      aria-label={`Use ${name} theme`}
+      aria-label={`Usar tema ${name}`}
       className={cn(
         "flex flex-col gap-3 rounded-lg border bg-card p-4 text-left transition-colors",
         isActive
@@ -88,7 +88,7 @@ function ThemeCard({
         {isActive && (
           <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary">
             <Check className="h-3 w-3" />
-            Active
+            Ativo
           </span>
         )}
       </div>
@@ -107,7 +107,7 @@ function ThemeCard({
         <span className="w-3 bg-slate-800" />
         <span className="w-3 bg-slate-900" />
       </div>
-      <span className="sr-only">Theme id: {id}</span>
+      <span className="sr-only">ID do tema: {id}</span>
     </button>
   );
 }

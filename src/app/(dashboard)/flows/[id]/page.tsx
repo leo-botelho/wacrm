@@ -9,16 +9,16 @@ import { FlowBuilder } from "@/components/flows/flow-builder";
 import type { FlowRow, FlowNodeRow } from "@/lib/flows/types";
 
 /**
- * Flow editor shell.
+ * Shell do editor de fluxo.
  *
- * Loads `{flow, nodes}` from `/api/flows/[id]` and hands it to
- * `<FlowBuilder>`. Owns the loading/error state so the builder can
- * focus purely on editing.
+ * Carrega `{flow, nodes}` de `/api/flows/[id]` e passa para
+ * `<FlowBuilder>`. Gerencia o estado de carregamento/erro para que o
+ * builder possa focar apenas na edição.
  *
- * Open to every authenticated user — the beta gate that previously
- * 404'd non-beta accounts was removed in PR #134. The API still
- * 404s on a flow id the caller doesn't own (RLS), which becomes the
- * "Flow not found" state below.
+ * Aberto para todos os usuários autenticados — o bloqueio beta que
+ * anteriormente retornava 404 para contas não-beta foi removido no PR #134.
+ * A API ainda retorna 404 para um flow id que o chamador não possui (RLS),
+ * o que se torna o estado "Fluxo não encontrado" abaixo.
  */
 export default function FlowEditorPage() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function FlowEditorPage() {
           if (!cancelled) setNotFound(true);
           return;
         }
-        if (!res.ok) throw new Error(`Failed: ${res.status}`);
+        if (!res.ok) throw new Error(`Falha: ${res.status}`);
         const json = (await res.json()) as {
           flow: FlowRow;
           nodes: FlowNodeRow[];
@@ -51,7 +51,7 @@ export default function FlowEditorPage() {
       } catch (err) {
         if (!cancelled) {
           console.error(err);
-          toast.error("Couldn't load flow.");
+          toast.error("Não foi possível carregar o fluxo.");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -72,13 +72,13 @@ export default function FlowEditorPage() {
   if (notFound || !flow) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3">
-        <p className="text-sm text-slate-400">Flow not found.</p>
+        <p className="text-sm text-slate-400">Fluxo não encontrado.</p>
         <button
           type="button"
           onClick={() => router.push("/flows")}
           className="text-sm text-primary hover:opacity-80"
         >
-          ← Back to flows
+          ← Voltar para fluxos
         </button>
       </div>
     );

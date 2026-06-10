@@ -16,11 +16,6 @@ import {
 import { Radio, Plus, Loader2 } from 'lucide-react';
 import { getBroadcastStatus } from '@/lib/broadcast-status';
 
-/**
- * Poll cadence while any broadcast is sending. Kept modest so we don't
- * beat on Supabase — the aggregate trigger in migration 003 keeps
- * counts consistent; we just need to surface the freshest snapshot.
- */
 const POLL_INTERVAL_MS = 5_000;
 
 function percent(numerator: number, denominator: number): number {
@@ -35,7 +30,6 @@ function RateCell({
 }: {
   value: number;
   total: number;
-  /** Tailwind bg class for the fill, e.g. "bg-primary" */
   color: string;
 }) {
   const pct = percent(value, total);
@@ -60,7 +54,6 @@ export default function BroadcastsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Used to kick off polling only while something is actively sending.
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   async function fetchBroadcasts() {
@@ -74,7 +67,7 @@ export default function BroadcastsPage() {
       if (fetchError) throw fetchError;
       setBroadcasts(data ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load broadcasts');
+      setError(err instanceof Error ? err.message : 'Erro ao carregar disparos');
     } finally {
       setLoading(false);
     }
@@ -100,9 +93,6 @@ export default function BroadcastsPage() {
       pollTimer.current = null;
     }
 
-    // Pause polling while the tab is hidden — keeps Supabase cold when
-    // the user is away, and ensures a fresh fetch the moment they
-    // refocus so they don't see stale data on return.
     function handleVisibilityChange() {
       if (!anySending) return;
       if (document.visibilityState === 'hidden') {
@@ -138,7 +128,7 @@ export default function BroadcastsPage() {
       <div className="flex h-64 flex-col items-center justify-center gap-2">
         <p className="text-sm text-red-400">{error}</p>
         <Button variant="outline" onClick={() => window.location.reload()}>
-          Retry
+          Tentar novamente
         </Button>
       </div>
     );
@@ -146,12 +136,10 @@ export default function BroadcastsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top indeterminate progress bar: only visible while a broadcast
-          is mid-send. Pure CSS animation so no extra deps. */}
       {anySending && (
         <div
           role="progressbar"
-          aria-label="Broadcast in progress"
+          aria-label="Disparo em andamento"
           className="broadcast-indeterminate fixed inset-x-0 top-0 z-40 h-0.5 overflow-hidden bg-slate-800"
         >
           <div className="broadcast-indeterminate-bar h-0.5 bg-primary" />
@@ -176,9 +164,9 @@ export default function BroadcastsPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Broadcasts</h1>
+          <h1 className="text-2xl font-bold text-white">Disparos</h1>
           <p className="mt-1 text-sm text-slate-400">
-            Send bulk messages to your contacts using approved templates.
+            Envie mensagens em massa para seus contatos usando modelos aprovados.
           </p>
         </div>
         <Button
@@ -186,23 +174,23 @@ export default function BroadcastsPage() {
           className="bg-primary text-primary-foreground hover:bg-primary/90"
         >
           <Plus className="h-4 w-4" />
-          New Broadcast
+          Novo Disparo
         </Button>
       </div>
 
       {broadcasts.length === 0 ? (
         <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-slate-800 bg-slate-900">
           <Radio className="mb-3 h-10 w-10 text-slate-600" />
-          <p className="text-sm font-medium text-white">No broadcasts yet</p>
+          <p className="text-sm font-medium text-white">Nenhum disparo ainda</p>
           <p className="mt-1 text-xs text-slate-400">
-            Create your first broadcast to reach your contacts at scale.
+            Crie seu primeiro disparo para alcançar seus contatos em escala.
           </p>
           <Button
             onClick={() => router.push('/broadcasts/new')}
             className="mt-4 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Plus className="h-4 w-4" />
-            New Broadcast
+            Novo Disparo
           </Button>
         </div>
       ) : (
@@ -210,15 +198,15 @@ export default function BroadcastsPage() {
           <Table>
             <TableHeader>
               <TableRow className="border-slate-800 hover:bg-transparent">
-                <TableHead className="text-slate-400">Name</TableHead>
-                <TableHead className="hidden text-slate-400 md:table-cell">Template</TableHead>
+                <TableHead className="text-slate-400">Nome</TableHead>
+                <TableHead className="hidden text-slate-400 md:table-cell">Modelo</TableHead>
                 <TableHead className="hidden text-right text-slate-400 sm:table-cell">
-                  Recipients
+                  Destinatários
                 </TableHead>
-                <TableHead className="hidden text-slate-400 lg:table-cell">Delivery</TableHead>
-                <TableHead className="hidden text-slate-400 lg:table-cell">Read</TableHead>
+                <TableHead className="hidden text-slate-400 lg:table-cell">Entrega</TableHead>
+                <TableHead className="hidden text-slate-400 lg:table-cell">Lido</TableHead>
                 <TableHead className="text-slate-400">Status</TableHead>
-                <TableHead className="hidden text-slate-400 sm:table-cell">Date</TableHead>
+                <TableHead className="hidden text-slate-400 sm:table-cell">Data</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -267,7 +255,7 @@ export default function BroadcastsPage() {
                       </span>
                     </TableCell>
                     <TableCell className="hidden text-slate-400 sm:table-cell">
-                      {new Date(broadcast.created_at).toLocaleDateString()}
+                      {new Date(broadcast.created_at).toLocaleDateString('pt-BR')}
                     </TableCell>
                   </TableRow>
                 );
