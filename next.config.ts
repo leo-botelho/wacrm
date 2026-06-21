@@ -1,4 +1,9 @@
 import type { NextConfig } from "next";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+
+// Wires Cloudflare bindings (env vars, KV, R2, etc.) into `next dev` so
+// local dev mirrors the Workers runtime. No-op in production builds.
+initOpenNextCloudflareForDev();
 
 /**
  * Baseline security headers applied to every response.

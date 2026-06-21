@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "wacrm",
+  "compatibility_date": "2025-03-01",
+  // nodejs_compat: lets the Worker use Node.js built-ins that Next.js
+  //   and its deps reach for at runtime.
+  // global_fetch_strictly_public: makes server-side fetch() to our own
+  //   routes go over the public edge (needed by next/image + some
+  //   opennext internals); pairs with WORKER_SELF_REFERENCE below.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // Self-reference binding required by opennext for cache revalidation
+  // and internal routing. The `service` value MUST match `name` above —
+  // if you rename the worker, change both.
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "wacrm"
+    }
+  ]
+}
