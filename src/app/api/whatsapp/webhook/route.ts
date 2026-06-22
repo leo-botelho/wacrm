@@ -178,8 +178,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  // Process asynchronously so we can ack Meta within their timeout.
-  processWebhook(body).catch((error) => {
+  // Await processing before responding — Cloudflare Workers terminates
+  // the execution context as soon as the response is sent, so fire-and-forget
+  // would kill processWebhook before it writes to the DB.
+  await processWebhook(body).catch((error) => {
     console.error('Error processing webhook:', error)
   })
 
