@@ -17,23 +17,34 @@ import {
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+    // Auth: Supabase session (browser) OR X-Api-Key header (n8n / external)
+    let userId: string
+    const apiKey = request.headers.get('X-Api-Key')
+    if (apiKey && process.env.WACRM_API_KEY && apiKey === process.env.WACRM_API_KEY) {
+      const { data: cfg } = await supabaseAdmin()
+        .from('whatsapp_config')
+        .select('user_id')
+        .limit(1)
+        .single()
+      if (!cfg) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      userId = cfg.user_id
+    } else {
+      const supabase = await createClient()
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError || !user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      userId = user.id
     }
+
+    // All DB operations use admin client with explicit user_id filters
+    const db = supabaseAdmin()
 
     // Per-user rate limit. Bucket key is scoped to this route so
     // `/broadcast` has an independent budget.
-    const limit = checkRateLimit(`send:${user.id}`, RATE_LIMITS.send)
+    const limit = checkRateLimit(`send:${userId}`, RATE_LIMITS.send)
     if (!limit.success) {
       return rateLimitResponse(limit)
     }
@@ -71,11 +82,11 @@ export async function POST(request: Request) {
     }
 
     // Fetch conversation and contact
-    const { data: conversation, error: convError } = await supabase
+    const { data: conversation, error: convError } = await db
       .from('conversations')
       .select('*, contact:contacts(*)')
       .eq('id', conversation_id)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single()
 
     if (convError || !conversation) {
@@ -103,10 +114,10 @@ export async function POST(request: Request) {
     }
 
     // Fetch and decrypt WhatsApp config
-    const { data: config, error: configError } = await supabase
+    const { data: config, error: configError } = await db
       .from('whatsapp_config')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single()
 
     if (configError || !config) {
@@ -126,7 +137,7 @@ export async function POST(request: Request) {
     if (isLegacyFormat(config.access_token)) {
       void (async () => {
         const upgradedToken = await encrypt(accessToken)
-        const { error } = await supabase
+        const { error } = await db
           .from('whatsapp_config')
           .update({ access_token: upgradedToken })
           .eq('id', config.id)
@@ -142,7 +153,7 @@ export async function POST(request: Request) {
     // could quote messages they can't see by guessing UUIDs.
     let contextMessageId: string | undefined
     if (reply_to_message_id) {
-      const { data: parent, error: parentError } = await supabase
+      const { data: parent, error: parentError } = await db
         .from('messages')
         .select('message_id, conversation_id')
         .eq('id', reply_to_message_id)
@@ -237,7 +248,7 @@ export async function POST(request: Request) {
       console.log(
         `[whatsapp/send] Auto-corrected contact phone: ${sanitizedPhone} → ${workingPhone}`
       )
-      await supabase
+      await db
         .from('contacts')
         .update({ phone: workingPhone })
         .eq('id', contact.id)
@@ -247,7 +258,7 @@ export async function POST(request: Request) {
     // (see supabase/migrations/001_initial_schema.sql):
     //   conversation_id, sender_type, content_type, content_text,
     //   media_url, template_name, message_id, status, created_at
-    const { data: messageRecord, error: msgError } = await supabase
+    const { data: messageRecord, error: msgError } = await db
       .from('messages')
       .insert({
         conversation_id,
@@ -272,7 +283,7 @@ export async function POST(request: Request) {
     }
 
     // Update conversation
-    await supabase
+    await db
       .from('conversations')
       .update({
         last_message_text: content_text || `[${message_type}]`,
@@ -295,7 +306,7 @@ export async function POST(request: Request) {
           ended_at: new Date().toISOString(),
           end_reason: 'agent_replied',
         })
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('contact_id', contact.id)
         .eq('status', 'active')
       if (pauseErr) {
