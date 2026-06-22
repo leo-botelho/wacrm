@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import {
   Eye,
@@ -35,8 +35,9 @@ type ConnectionStatus = 'connected' | 'disconnected' | 'unknown';
 type ResetReason = 'token_corrupted' | 'meta_api_error' | null;
 
 export function WhatsAppConfig() {
-  const supabase = createClient();
+  const supabase = useRef(createClient()).current;
   const { user, loading: authLoading } = useAuth();
+  const userId = user?.id;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -123,12 +124,12 @@ export function WhatsAppConfig() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) {
+    if (!userId) {
       setLoading(false);
       return;
     }
-    fetchConfig(user.id);
-  }, [authLoading, user, fetchConfig]);
+    fetchConfig(userId);
+  }, [authLoading, userId, fetchConfig]);
 
   async function handleSave() {
     if (!phoneNumberId.trim()) {
