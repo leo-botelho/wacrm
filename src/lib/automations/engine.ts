@@ -40,6 +40,12 @@ export interface AutomationContext {
   message_type?: string
   /** Public URL for media messages (image, video, audio, document). */
   media_url?: string | null
+  /** Raw message object exactly as received from Meta Cloud API. */
+  raw_message?: Record<string, unknown>
+  /** Contact profile from Meta (name, wa_id). */
+  raw_contact?: Record<string, unknown>
+  /** WhatsApp phone number metadata (phone_number_id, display_phone_number). */
+  raw_metadata?: Record<string, unknown>
 }
 
 export interface DispatchInput {

@@ -229,7 +229,8 @@ async function processWebhook(body: { entry?: WhatsAppWebhookEntry[] }) {
           message,
           contact,
           config.user_id,
-          decryptedAccessToken
+          decryptedAccessToken,
+          value.metadata
         )
       }
     }
@@ -453,7 +454,8 @@ async function processMessage(
   message: WhatsAppMessage,
   contact: { profile: { name: string }; wa_id: string },
   userId: string,
-  accessToken: string
+  accessToken: string,
+  metadata?: { display_phone_number: string; phone_number_id: string }
 ) {
   const senderPhone = normalizePhone(message.from)
   const contactName = contact.profile.name
@@ -657,6 +659,9 @@ async function processMessage(
         contact_phone: contactRecord.phone ?? senderPhone,
         message_type: contentType,
         media_url: mediaUrl,
+        raw_message: message as unknown as Record<string, unknown>,
+        raw_contact: contact as unknown as Record<string, unknown>,
+        raw_metadata: metadata as unknown as Record<string, unknown>,
       },
     })
   }
