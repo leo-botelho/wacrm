@@ -38,8 +38,10 @@ export interface AutomationContext {
   contact_phone?: string
   /** Message content type: text, image, video, audio, document, etc. */
   message_type?: string
-  /** Public URL for media messages (image, video, audio, document). */
+  /** CRM proxy URL for media (requires X-Api-Key to download). */
   media_url?: string | null
+  /** Direct pre-signed Meta CDN URL — no auth needed, valid ~5 min after receipt. */
+  media_download_url?: string | null
   /** Raw message object exactly as received from Meta Cloud API. */
   raw_message?: Record<string, unknown>
   /** Contact profile from Meta (name, wa_id). */

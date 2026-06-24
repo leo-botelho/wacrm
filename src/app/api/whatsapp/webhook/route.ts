@@ -661,6 +661,8 @@ async function processMessage(
         media_url: mediaUrl
           ? `${process.env.NEXT_PUBLIC_SITE_URL}${mediaUrl}`
           : null,
+        media_download_url:
+          (message as Record<string, Record<string, string>>)[message.type]?.url ?? null,
         raw_message: message as unknown as Record<string, unknown>,
         raw_contact: contact as unknown as Record<string, unknown>,
         raw_metadata: metadata as unknown as Record<string, unknown>,
