@@ -32,6 +32,14 @@ export interface AutomationContext {
   tag_id?: string
   /** Agent the conversation was assigned to, for conversation_assigned. */
   agent_id?: string
+  /** Contact display name (from WhatsApp profile). */
+  contact_name?: string
+  /** Contact phone number in E.164 format. */
+  contact_phone?: string
+  /** Message content type: text, image, video, audio, document, etc. */
+  message_type?: string
+  /** Public URL for media messages (image, video, audio, document). */
+  media_url?: string | null
 }
 
 export interface DispatchInput {
@@ -541,7 +549,17 @@ function waitMs(cfg: WaitStepConfig): number {
 function interpolate(s: string, args: ExecuteArgs): string {
   return s.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, key) => {
     const [ns, prop] = String(key).split('.')
-    if (ns === 'message' && prop === 'text') return String(args.context.message_text ?? '')
+    if (ns === 'message') {
+      if (prop === 'text') return String(args.context.message_text ?? '')
+      if (prop === 'type') return String(args.context.message_type ?? 'text')
+      if (prop === 'media_url') return String(args.context.media_url ?? '')
+    }
+    if (ns === 'contact') {
+      if (prop === 'name') return String(args.context.contact_name ?? '')
+      if (prop === 'phone') return String(args.context.contact_phone ?? '')
+      if (prop === 'id') return String(args.contactId ?? '')
+    }
+    if (ns === 'conversation' && prop === 'id') return String(args.context.conversation_id ?? '')
     if (ns === 'vars' && prop) return String(args.context.vars?.[prop] ?? '')
     return ''
   })

@@ -653,6 +653,10 @@ async function processMessage(
       context: {
         message_text: inboundText,
         conversation_id: conversation.id,
+        contact_name: contactRecord.name ?? contactName,
+        contact_phone: contactRecord.phone ?? senderPhone,
+        message_type: contentType,
+        media_url: mediaUrl,
       },
     })
   }
