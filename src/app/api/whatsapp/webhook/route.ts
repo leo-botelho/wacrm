@@ -658,7 +658,9 @@ async function processMessage(
         contact_name: contactRecord.name ?? contactName,
         contact_phone: contactRecord.phone ?? senderPhone,
         message_type: contentType,
-        media_url: mediaUrl,
+        media_url: mediaUrl
+          ? `${process.env.NEXT_PUBLIC_SITE_URL}${mediaUrl}`
+          : null,
         raw_message: message as unknown as Record<string, unknown>,
         raw_contact: contact as unknown as Record<string, unknown>,
         raw_metadata: metadata as unknown as Record<string, unknown>,
