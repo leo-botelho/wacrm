@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/flows/admin-client'
 import { getMediaUrl, downloadMedia } from '@/lib/whatsapp/meta-api'
 import { decrypt } from '@/lib/whatsapp/encryption'
 
@@ -17,25 +18,24 @@ export async function GET(
       )
     }
 
-    const supabase = await createClient()
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+    // Auth: Supabase session (browser) OR X-Api-Key header (n8n / external)
+    let configQuery: ReturnType<typeof supabaseAdmin>['from']
+    const apiKey = request.headers.get('X-Api-Key')
+    if (apiKey && process.env.WACRM_API_KEY && apiKey === process.env.WACRM_API_KEY) {
+      configQuery = supabaseAdmin().from.bind(supabaseAdmin())
+    } else {
+      const supabase = await createClient()
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError || !user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      configQuery = supabase.from.bind(supabase)
     }
 
     // Fetch and decrypt WhatsApp config
-    const { data: config, error: configError } = await supabase
-      .from('whatsapp_config')
+    const { data: config, error: configError } = await configQuery('whatsapp_config')
       .select('*')
-      .eq('user_id', user.id)
+      .limit(1)
       .single()
 
     if (configError || !config) {
