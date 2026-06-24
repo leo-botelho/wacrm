@@ -621,8 +621,10 @@ async function processMessage(
   // Fire any automations that react to this webhook event. All dispatches
   // run here (not earlier) so the contact, conversation, and inbound
   // message all exist before any step — including send_message — runs.
-  // Fire-and-forget: a slow or failing automation must not block the
-  // webhook's 200 OK response to Meta.
+  // Awaited (not fire-and-forget) because Cloudflare Workers terminates
+  // the execution context as soon as the response is sent — background
+  // promises are killed before they finish. runAutomationsForTrigger
+  // never throws (all errors caught internally), so awaiting is safe.
   const inboundText = contentText ?? message.text?.body ?? ''
   const automationTriggers: (
     | 'new_contact_created'
@@ -644,7 +646,7 @@ async function processMessage(
   if (contactOutcome.wasCreated) automationTriggers.unshift('new_contact_created')
   if (isFirstInboundMessage) automationTriggers.unshift('first_inbound_message')
   for (const triggerType of automationTriggers) {
-    runAutomationsForTrigger({
+    await runAutomationsForTrigger({
       userId,
       triggerType,
       contactId: contactRecord.id,
@@ -652,7 +654,7 @@ async function processMessage(
         message_text: inboundText,
         conversation_id: conversation.id,
       },
-    }).catch((err) => console.error('[automations] dispatch failed:', err))
+    })
   }
 }
 
