@@ -18,22 +18,25 @@ export async function GET(
       )
     }
 
-    // Auth: Supabase session (browser) OR X-Api-Key header (n8n / external)
-    let configQuery: ReturnType<typeof supabaseAdmin>['from']
+    // Auth: X-Api-Key header (n8n / external) OR Supabase session (browser)
     const apiKey = request.headers.get('X-Api-Key')
-    if (apiKey && process.env.WACRM_API_KEY && apiKey === process.env.WACRM_API_KEY) {
-      configQuery = supabaseAdmin().from.bind(supabaseAdmin())
-    } else {
+    const isApiKey =
+      !!apiKey &&
+      !!process.env.WACRM_API_KEY &&
+      apiKey === process.env.WACRM_API_KEY
+
+    if (!isApiKey) {
       const supabase = await createClient()
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       if (authError || !user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
-      configQuery = supabase.from.bind(supabase)
     }
 
-    // Fetch and decrypt WhatsApp config
-    const { data: config, error: configError } = await configQuery('whatsapp_config')
+    // Both paths use the admin client to fetch the config.
+    // Single-tenant: there is exactly one whatsapp_config row.
+    const { data: config, error: configError } = await supabaseAdmin()
+      .from('whatsapp_config')
       .select('*')
       .limit(1)
       .single()
