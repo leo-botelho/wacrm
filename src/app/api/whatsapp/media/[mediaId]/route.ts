@@ -4,6 +4,12 @@ import { supabaseAdmin } from '@/lib/flows/admin-client'
 import { getMediaUrl, downloadMedia } from '@/lib/whatsapp/meta-api'
 import { decrypt } from '@/lib/whatsapp/encryption'
 
+function isValidApiKey(key: string | null): boolean {
+  const expected = process.env.WACRM_API_KEY
+  if (!expected || !key) return false
+  return key.trim() === expected.trim()
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ mediaId: string }> }
@@ -12,18 +18,14 @@ export async function GET(
     const { mediaId } = await params
 
     if (!mediaId) {
-      return NextResponse.json(
-        { error: 'Media ID is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Media ID is required' }, { status: 400 })
     }
 
-    // Auth: X-Api-Key header (n8n / external) OR Supabase session (browser)
-    const apiKey = request.headers.get('X-Api-Key')
-    const isApiKey =
-      !!apiKey &&
-      !!process.env.WACRM_API_KEY &&
-      apiKey === process.env.WACRM_API_KEY
+    // Accept api_key as query param OR X-Api-Key header (easier to configure in n8n)
+    const { searchParams } = new URL(request.url)
+    const keyFromQuery = searchParams.get('api_key')
+    const keyFromHeader = request.headers.get('X-Api-Key') ?? request.headers.get('x-api-key')
+    const isApiKey = isValidApiKey(keyFromQuery) || isValidApiKey(keyFromHeader)
 
     if (!isApiKey) {
       const supabase = await createClient()
@@ -33,8 +35,6 @@ export async function GET(
       }
     }
 
-    // Both paths use the admin client to fetch the config.
-    // Single-tenant: there is exactly one whatsapp_config row.
     const { data: config, error: configError } = await supabaseAdmin()
       .from('whatsapp_config')
       .select('*')
@@ -42,18 +42,13 @@ export async function GET(
       .single()
 
     if (configError || !config) {
-      return NextResponse.json(
-        { error: 'WhatsApp not configured' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'WhatsApp not configured' }, { status: 400 })
     }
 
     const accessToken = await decrypt(config.access_token)
 
-    // Get the download URL from Meta
     const mediaInfo = await getMediaUrl({ mediaId, accessToken })
 
-    // Download the binary data
     const { buffer, contentType } = await downloadMedia({
       downloadUrl: mediaInfo.url,
       accessToken,
@@ -68,9 +63,6 @@ export async function GET(
     })
   } catch (error) {
     console.error('Error in WhatsApp media GET:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch media' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch media' }, { status: 500 })
   }
 }
