@@ -533,7 +533,7 @@ export default function InboxPage() {
             (shows its own empty-state if no thread is picked yet). */}
         <div
           className={cn(
-            "flex h-full flex-1 lg:flex",
+            "flex h-full min-w-0 flex-1 lg:flex",
             hasActiveConv ? "flex" : "hidden lg:flex",
           )}
         >
@@ -552,8 +552,12 @@ export default function InboxPage() {
           />
         </div>
 
-        {/* Right panel: Contact sidebar — desktop only. */}
-        <div className="hidden lg:block">
+        {/* Right panel: Contact sidebar — desktop only. shrink-0 so it
+            always keeps its full w-70 (see ContactSidebar) instead of
+            being squeezed by the row and clipped by overflow-hidden
+            above — the thread column (min-w-0) absorbs the compression
+            instead. */}
+        <div className="hidden lg:block lg:shrink-0">
           <ContactSidebar contact={activeContact} />
         </div>
       </div>
