@@ -21,6 +21,7 @@ import {
   Clock,
   ArrowLeft,
   RefreshCw,
+  Zap,
 } from "lucide-react";
 import { format, isToday, isYesterday, differenceInHours } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -173,6 +174,8 @@ export function MessageThread({
     }, 700);
   }, [isRefreshing, onRefresh]);
   const [replyTo, setReplyTo] = useState<ReplyDraft | null>(null);
+  const [macros, setMacros] = useState<{ id: string; name: string }[]>([]);
+  const [runningMacroId, setRunningMacroId] = useState<string | null>(null);
 
   // Profiles are bounded by RLS to rows the current user is allowed to
   // see — today that's just the current user, but the dropdown keeps the
@@ -196,6 +199,57 @@ export function MessageThread({
       cancelled = true;
     };
   }, []);
+
+  // "Macros" — automations with trigger_type='manual_action' don't fire on
+  // their own; they only run when the agent explicitly picks them from
+  // this dropdown (e.g. "Ativar Agente" after taking over a conversation).
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = createClient();
+    supabase
+      .from("automations")
+      .select("id, name")
+      .eq("trigger_type", "manual_action")
+      .eq("is_active", true)
+      .order("name")
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          console.error("Failed to fetch macros:", error);
+          return;
+        }
+        setMacros(data ?? []);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleRunMacro = useCallback(
+    async (automationId: string) => {
+      if (!conversation) return;
+      setRunningMacroId(automationId);
+      try {
+        const res = await fetch("/api/automations/trigger-manual", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            automation_id: automationId,
+            conversation_id: conversation.id,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "Falha ao executar macro");
+        toast.success("Macro executada");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Falha ao executar macro";
+        toast.error(message);
+      } finally {
+        setRunningMacroId(null);
+      }
+    },
+    [conversation]
+  );
 
   // 24-hour session timer
   const sessionInfo = useMemo(() => {
@@ -844,6 +898,35 @@ export function MessageThread({
               )}
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Macros — manually-triggered automations (e.g. "Ativar Agente")
+              only rendered when the user has at least one configured. */}
+          {macros.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className="inline-flex items-center justify-center h-7 gap-1 px-2 text-xs rounded-md text-slate-400 hover:bg-slate-800"
+              >
+                <Zap className="h-3 w-3" />
+                <span className="hidden sm:inline">Macros</span>
+                <ChevronDown className="h-3 w-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="border-slate-700 bg-slate-800"
+              >
+                {macros.map((macro) => (
+                  <DropdownMenuItem
+                    key={macro.id}
+                    disabled={runningMacroId === macro.id}
+                    onClick={() => handleRunMacro(macro.id)}
+                    className="text-sm text-slate-300"
+                  >
+                    {macro.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 

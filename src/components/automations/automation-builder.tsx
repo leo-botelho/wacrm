@@ -121,6 +121,11 @@ const TRIGGER_OPTIONS: { value: AutomationTriggerType; label: string; hint: stri
     label: "Mensagem Enviada",
     hint: "Toda mensagem enviada (pelo CRM ou pela API) — o payload do webhook inclui sent_by_crm (true/false)",
   },
+  {
+    value: "manual_action",
+    label: "Ação Manual (Macro)",
+    hint: "Não dispara sozinha — aparece como botão 'Macros' na conversa para o agente acionar quando quiser",
+  },
 ]
 
 function cid(): string {

@@ -145,6 +145,42 @@ export async function resumePendingExecution(pending: {
   }
 }
 
+/**
+ * Run one specific automation directly, bypassing the trigger-type
+ * dispatch — used by the conversation-view "macro" button, where the
+ * agent picks exactly which automation to fire rather than every
+ * automation matching some event.
+ */
+export async function runAutomationById(
+  automationId: string,
+  userId: string,
+  contactId: string | null,
+  context: AutomationContext,
+): Promise<{ ok: boolean; error?: string }> {
+  const db = supabaseAdmin()
+  const { data: automation, error } = await db
+    .from('automations')
+    .select('*')
+    .eq('id', automationId)
+    .eq('user_id', userId)
+    .single()
+
+  if (error || !automation) {
+    return { ok: false, error: 'Automation not found' }
+  }
+  if (!automation.is_active) {
+    return { ok: false, error: 'Automation is not active' }
+  }
+
+  await executeAutomation(automation as Automation, {
+    userId,
+    triggerType: automation.trigger_type,
+    contactId,
+    context,
+  })
+  return { ok: true }
+}
+
 // ------------------------------------------------------------
 // Internal execution
 // ------------------------------------------------------------

@@ -15,8 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Upload, FileText, Loader2, CheckCircle, XCircle, Download } from 'lucide-react';
 
 const CSV_TEMPLATE = [
-  'phone,name,email,company',
-  '+5511999999999,Joao Silva,joao@email.com,Empresa XYZ',
+  'phone,name,email,company,tags',
+  '+5511999999999,Joao Silva,joao@email.com,Empresa XYZ,cliente;vip',
 ].join('\n');
 
 function downloadCsvTemplate() {
@@ -32,7 +32,7 @@ function downloadCsvTemplate() {
 // Accepts common PT-BR header aliases alongside the canonical English names
 // so a user typing "telefone" instead of "phone" doesn't silently get zero
 // valid rows.
-const HEADER_ALIASES: Record<string, 'phone' | 'name' | 'email' | 'company'> = {
+const HEADER_ALIASES: Record<string, 'phone' | 'name' | 'email' | 'company' | 'tags'> = {
   phone: 'phone',
   telefone: 'phone',
   tel: 'phone',
@@ -44,6 +44,8 @@ const HEADER_ALIASES: Record<string, 'phone' | 'name' | 'email' | 'company'> = {
   'e-mail': 'email',
   company: 'company',
   empresa: 'company',
+  tags: 'tags',
+  etiquetas: 'tags',
 };
 
 interface ImportModalProps {
@@ -57,6 +59,7 @@ interface ParsedRow {
   name?: string;
   email?: string;
   company?: string;
+  tags: string[];
 }
 
 function parseCSV(text: string): ParsedRow[] {
@@ -73,6 +76,7 @@ function parseCSV(text: string): ParsedRow[] {
   const nameIdx = headers.indexOf('name');
   const emailIdx = headers.indexOf('email');
   const companyIdx = headers.indexOf('company');
+  const tagsIdx = headers.indexOf('tags');
 
   const rows: ParsedRow[] = [];
   for (let i = 1; i < lines.length; i++) {
@@ -98,12 +102,18 @@ function parseCSV(text: string): ParsedRow[] {
     const phone = values[phoneIdx]?.replace(/["']/g, '').trim();
     if (!phone) continue;
 
+    const tagsRaw = tagsIdx >= 0 ? values[tagsIdx]?.replace(/["']/g, '').trim() : '';
+    const tags = tagsRaw
+      ? tagsRaw.split(';').map((t) => t.trim()).filter(Boolean)
+      : [];
+
     rows.push({
       phone,
       name: nameIdx >= 0 ? values[nameIdx]?.replace(/["']/g, '').trim() || undefined : undefined,
       email: emailIdx >= 0 ? values[emailIdx]?.replace(/["']/g, '').trim() || undefined : undefined,
       company:
         companyIdx >= 0 ? values[companyIdx]?.replace(/["']/g, '').trim() || undefined : undefined,
+      tags,
     });
   }
 
@@ -161,6 +171,47 @@ export function ImportModal({ open, onOpenChange, onImported }: ImportModalProps
       const user = session?.user;
       if (!user) throw new Error('Não autenticado');
 
+      // Resolve tag names -> ids up front: reuse existing tags (matched
+      // case-insensitively) and create whichever ones don't exist yet.
+      const uniqueTagNames = Array.from(
+        new Set(parsedRows.flatMap((r) => r.tags).filter(Boolean))
+      );
+      const tagIdByName = new Map<string, string>();
+      if (uniqueTagNames.length > 0) {
+        const { data: existingTags } = await supabase
+          .from('tags')
+          .select('id, name')
+          .eq('user_id', user.id);
+        for (const t of existingTags ?? []) {
+          tagIdByName.set(t.name.toLowerCase(), t.id);
+        }
+        const missing = uniqueTagNames.filter(
+          (name) => !tagIdByName.has(name.toLowerCase())
+        );
+        if (missing.length > 0) {
+          const { data: createdTags, error: createTagsErr } = await supabase
+            .from('tags')
+            .insert(missing.map((name) => ({ user_id: user.id, name })))
+            .select('id, name');
+          if (createTagsErr) {
+            toast.error(`Falha ao criar tags: ${createTagsErr.message}`);
+          }
+          for (const t of createdTags ?? []) {
+            tagIdByName.set(t.name.toLowerCase(), t.id);
+          }
+        }
+      }
+
+      const linkTags = async (contactId: string, tagNames: string[]) => {
+        const tagIds = tagNames
+          .map((name) => tagIdByName.get(name.toLowerCase()))
+          .filter((id): id is string => !!id);
+        if (tagIds.length === 0) return;
+        await supabase
+          .from('contact_tags')
+          .insert(tagIds.map((tagId) => ({ contact_id: contactId, tag_id: tagId })));
+      };
+
       let imported = 0;
       let failed = 0;
 
@@ -183,16 +234,27 @@ export function ImportModal({ open, onOpenChange, onImported }: ImportModalProps
 
         if (error) {
           // Try individual inserts for this chunk
-          for (const row of rows) {
-            const { error: singleErr } = await supabase.from('contacts').insert(row);
-            if (singleErr) {
+          for (let j = 0; j < rows.length; j++) {
+            const { data: single, error: singleErr } = await supabase
+              .from('contacts')
+              .insert(rows[j])
+              .select('id')
+              .single();
+            if (singleErr || !single) {
               failed++;
             } else {
               imported++;
+              await linkTags(single.id, chunk[j].tags);
             }
           }
         } else {
           imported += data?.length ?? chunk.length;
+          // Postgres/PostgREST returns RETURNING rows in the same order as
+          // the VALUES list for a plain multi-row insert, so index i of
+          // `data` lines up with `chunk[i]`.
+          await Promise.all(
+            (data ?? []).map((row, j) => linkTags(row.id, chunk[j].tags))
+          );
         }
       }
 
@@ -221,7 +283,7 @@ export function ImportModal({ open, onOpenChange, onImported }: ImportModalProps
           <DialogTitle className="text-white">Importar Contatos</DialogTitle>
           <DialogDescription className="text-slate-400">
             Envie um arquivo CSV com a coluna &quot;phone&quot; ou &quot;telefone&quot; (obrigatória).
-            Colunas opcionais: name/nome, email, company/empresa.
+            Colunas opcionais: name/nome, email, company/empresa, tags (separadas por &quot;;&quot;).
           </DialogDescription>
         </DialogHeader>
 
@@ -283,6 +345,7 @@ export function ImportModal({ open, onOpenChange, onImported }: ImportModalProps
                       <th className="px-3 py-1.5 text-left text-slate-400 font-medium">Nome</th>
                       <th className="px-3 py-1.5 text-left text-slate-400 font-medium">E-mail</th>
                       <th className="px-3 py-1.5 text-left text-slate-400 font-medium">Empresa</th>
+                      <th className="px-3 py-1.5 text-left text-slate-400 font-medium">Tags</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -292,6 +355,7 @@ export function ImportModal({ open, onOpenChange, onImported }: ImportModalProps
                         <td className="px-3 py-1.5 text-slate-300">{row.name || '-'}</td>
                         <td className="px-3 py-1.5 text-slate-300">{row.email || '-'}</td>
                         <td className="px-3 py-1.5 text-slate-300">{row.company || '-'}</td>
+                        <td className="px-3 py-1.5 text-slate-300">{row.tags.join(', ') || '-'}</td>
                       </tr>
                     ))}
                   </tbody>

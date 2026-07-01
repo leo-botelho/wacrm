@@ -257,7 +257,8 @@ export type AutomationTriggerType =
   | 'conversation_assigned'
   | 'tag_added'
   | 'time_based'
-  | 'message_sent';
+  | 'message_sent'
+  | 'manual_action';
 
 export type AutomationStepType =
   | 'send_message'
