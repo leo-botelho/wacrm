@@ -900,15 +900,17 @@ export function MessageThread({
           </DropdownMenu>
 
           {/* Macros — manually-triggered automations (e.g. "Ativar Agente")
-              only rendered when the user has at least one configured. */}
+              only rendered when the user has at least one configured. Icon-only
+              (no text label, unlike Status/Assign) so it doesn't squeeze the
+              contact name/phone out of room in the header's fixed width. */}
           {macros.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger
-                className="inline-flex items-center justify-center h-7 gap-1 px-2 text-xs rounded-md text-slate-400 hover:bg-slate-800"
+                title="Macros"
+                aria-label="Macros"
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-slate-800"
               >
-                <Zap className="h-3 w-3" />
-                <span className="hidden sm:inline">Macros</span>
-                <ChevronDown className="h-3 w-3" />
+                <Zap className="h-3.5 w-3.5" />
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
