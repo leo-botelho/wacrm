@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { CustomField, Tag } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,32 @@ import {
   ArrowRight,
   ArrowLeft,
   X,
+  FileText,
 } from 'lucide-react';
+
+const CSV_PHONE_ALIASES = ['phone', 'telefone', 'tel', 'celular', 'whatsapp'];
+const CSV_NAME_ALIASES = ['name', 'nome'];
+
+function parseCsvContacts(text: string): { phone: string; name?: string }[] {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+
+  const headers = lines[0].split(',').map((h) => h.trim().toLowerCase().replace(/["']/g, ''));
+  const phoneIdx = headers.findIndex((h) => CSV_PHONE_ALIASES.includes(h));
+  if (phoneIdx === -1) return [];
+  const nameIdx = headers.findIndex((h) => CSV_NAME_ALIASES.includes(h));
+
+  const rows: { phone: string; name?: string }[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const values = line.split(',').map((v) => v.trim().replace(/["']/g, ''));
+    const phone = values[phoneIdx];
+    if (!phone) continue;
+    rows.push({ phone, name: nameIdx >= 0 ? values[nameIdx] || undefined : undefined });
+  }
+  return rows;
+}
 
 type AudienceType = 'all' | 'tags' | 'custom_field' | 'csv';
 type CustomFieldOperator = 'is' | 'is_not' | 'contains';
@@ -87,6 +112,9 @@ export function Step2SelectAudience({
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const [loadingTags, setLoadingTags] = useState(false);
   const [loadingFields, setLoadingFields] = useState(false);
+  const [csvFileName, setCsvFileName] = useState<string | null>(null);
+  const [csvError, setCsvError] = useState<string | null>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
   const [estimatedCount, setEstimatedCount] = useState<number | null>(null);
   const [loadingCount, setLoadingCount] = useState(false);
 
@@ -227,6 +255,33 @@ export function Step2SelectAudience({
     onUpdate({ ...audience, excludeTagIds: updated });
   }
 
+  function clearExcludeTags() {
+    onUpdate({ ...audience, excludeTagIds: [] });
+  }
+
+  async function handleCsvFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCsvFileName(file.name);
+    setCsvError(null);
+
+    const text = await file.text();
+    const rows = parseCsvContacts(text);
+    if (rows.length === 0) {
+      setCsvError('Nenhum número válido encontrado. Verifique se o CSV tem a coluna "phone".');
+      onUpdate({ ...audience, csvContacts: undefined });
+      return;
+    }
+    onUpdate({ ...audience, csvContacts: rows });
+  }
+
+  function clearCsvFile() {
+    setCsvFileName(null);
+    setCsvError(null);
+    if (csvInputRef.current) csvInputRef.current.value = '';
+    onUpdate({ ...audience, csvContacts: undefined });
+  }
+
   function updateCustomField(patch: Partial<CustomFieldFilter>) {
     const prev = audience.customField ?? {
       fieldId: '',
@@ -262,7 +317,12 @@ export function Step2SelectAudience({
           return (
             <button
               key={option.type}
-              onClick={() =>
+              onClick={() => {
+                if (option.type !== 'csv') {
+                  setCsvFileName(null);
+                  setCsvError(null);
+                  if (csvInputRef.current) csvInputRef.current.value = '';
+                }
                 onUpdate({
                   ...audience,
                   type: option.type,
@@ -275,8 +335,8 @@ export function Step2SelectAudience({
                       : undefined,
                   csvContacts:
                     option.type === 'csv' ? audience.csvContacts : undefined,
-                })
-              }
+                });
+              }}
               className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
                 isSelected
                   ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
@@ -389,6 +449,58 @@ export function Step2SelectAudience({
         </div>
       )}
 
+      {audience.type === 'csv' && (
+        <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+          <p className="text-sm font-medium text-white">Enviar CSV</p>
+          <p className="text-xs text-slate-400">
+            Arquivo CSV com a coluna &quot;phone&quot; ou &quot;telefone&quot; (obrigatória) e
+            &quot;name&quot;/&quot;nome&quot; (opcional).
+          </p>
+
+          <div
+            onClick={() => csvInputRef.current?.click()}
+            className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-700 p-6 cursor-pointer hover:border-primary/50 transition-colors"
+          >
+            {csvFileName ? (
+              <>
+                <FileText className="h-6 w-6 text-primary" />
+                <p className="text-sm text-slate-300">{csvFileName}</p>
+                <p className="text-xs text-slate-500">
+                  {audience.csvContacts?.length ?? 0} número
+                  {(audience.csvContacts?.length ?? 0) !== 1 ? 's' : ''} detectado
+                  {(audience.csvContacts?.length ?? 0) !== 1 ? 's' : ''}
+                </p>
+              </>
+            ) : (
+              <>
+                <Upload className="h-6 w-6 text-slate-500" />
+                <p className="text-sm text-slate-400">Clique para enviar arquivo CSV</p>
+              </>
+            )}
+          </div>
+
+          <input
+            ref={csvInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            onChange={handleCsvFileChange}
+            className="hidden"
+          />
+
+          {csvError && <p className="text-xs text-red-400">{csvError}</p>}
+
+          {csvFileName && (
+            <button
+              type="button"
+              onClick={clearCsvFile}
+              className="text-xs text-slate-400 hover:text-white hover:underline"
+            >
+              Remover arquivo
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Exclude list — applies regardless of audience type */}
       <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
         <div className="mb-3 flex items-center gap-2">
@@ -397,6 +509,15 @@ export function Step2SelectAudience({
             Excluir contatos com estas tags
           </p>
           <span className="text-xs text-slate-500">(opcional)</span>
+          {(audience.excludeTagIds?.length ?? 0) > 0 && (
+            <button
+              type="button"
+              onClick={clearExcludeTags}
+              className="ml-auto text-xs text-slate-400 hover:text-white hover:underline"
+            >
+              Limpar
+            </button>
+          )}
         </div>
         {tags.length === 0 ? (
           <p className="text-xs text-slate-500">Nenhuma tag disponível.</p>
@@ -408,6 +529,7 @@ export function Step2SelectAudience({
                 <button
                   key={tag.id}
                   onClick={() => toggleExcludeTag(tag.id)}
+                  title={isExcluded ? 'Clique para remover da exclusão' : 'Clique para excluir'}
                   className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-all ${
                     isExcluded
                       ? 'border-red-500/30 bg-red-500/10 text-red-300'
@@ -419,6 +541,7 @@ export function Step2SelectAudience({
                     style={{ backgroundColor: tag.color }}
                   />
                   {tag.name}
+                  {isExcluded && <X className="ml-1.5 h-3 w-3" />}
                 </button>
               );
             })}
