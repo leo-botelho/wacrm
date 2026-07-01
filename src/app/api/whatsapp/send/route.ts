@@ -32,13 +32,17 @@ export async function POST(request: Request) {
       request.headers.get('x-api-key') ??
       searchParams.get('api_key')
     if (isValidApiKey(apiKey)) {
-      const { data: cfg } = await supabaseAdmin()
+      const { data: cfg, error: cfgError } = await supabaseAdmin()
         .from('whatsapp_config')
         .select('user_id')
         .limit(1)
         .single()
-      if (!cfg) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      if (cfgError || !cfg) {
+        console.error('[whatsapp/send] api-key auth ok but whatsapp_config lookup failed:', cfgError?.message)
+        return NextResponse.json(
+          { error: `WhatsApp not configured: ${cfgError?.message ?? 'no rows'}` },
+          { status: 500 }
+        )
       }
       userId = cfg.user_id
     } else {
