@@ -15,12 +15,23 @@ import {
   RATE_LIMITS,
 } from '@/lib/rate-limit'
 
+function isValidApiKey(key: string | null): boolean {
+  const expected = process.env.WACRM_API_KEY
+  if (!expected || !key) return false
+  return key.trim() === expected.trim()
+}
+
 export async function POST(request: Request) {
   try {
-    // Auth: Supabase session (browser) OR X-Api-Key header (n8n / external)
+    // Auth: Supabase session (browser) OR api key via X-Api-Key header /
+    // ?api_key= query param (n8n / external)
     let userId: string
-    const apiKey = request.headers.get('X-Api-Key')
-    if (apiKey && process.env.WACRM_API_KEY && apiKey === process.env.WACRM_API_KEY) {
+    const { searchParams } = new URL(request.url)
+    const apiKey =
+      request.headers.get('X-Api-Key') ??
+      request.headers.get('x-api-key') ??
+      searchParams.get('api_key')
+    if (isValidApiKey(apiKey)) {
       const { data: cfg } = await supabaseAdmin()
         .from('whatsapp_config')
         .select('user_id')
