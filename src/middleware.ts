@@ -49,10 +49,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // API routes that need auth (not webhooks)
+  // API routes that need auth (not webhooks). External integrations (n8n)
+  // authenticate with a static API key instead of a session — let those
+  // through here so the route handler's own X-Api-Key check can run.
   if (!user && request.nextUrl.pathname.startsWith('/api/whatsapp/') &&
       !request.nextUrl.pathname.includes('/webhook')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const apiKey =
+      request.headers.get('X-Api-Key') ??
+      request.headers.get('x-api-key') ??
+      request.nextUrl.searchParams.get('api_key')
+    const expected = process.env.WACRM_API_KEY
+    const hasValidApiKey = !!apiKey && !!expected && apiKey.trim() === expected.trim()
+    if (!hasValidApiKey) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
   }
 
   return supabaseResponse
