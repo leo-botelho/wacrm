@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { MessageSquare } from "lucide-react";
+import { LogoMark } from "@/components/icons/logo";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -47,7 +47,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md border-slate-800 bg-slate-900">
         <CardHeader className="items-center text-center">
           <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-            <MessageSquare className="h-6 w-6 text-primary" />
+            <LogoMark className="h-6 w-6 text-primary" />
           </div>
           <CardTitle className="text-xl text-white">Bem-vindo de volta</CardTitle>
           <CardDescription className="text-slate-400">
