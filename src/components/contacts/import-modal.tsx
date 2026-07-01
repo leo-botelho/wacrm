@@ -12,7 +12,39 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Upload, FileText, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Upload, FileText, Loader2, CheckCircle, XCircle, Download } from 'lucide-react';
+
+const CSV_TEMPLATE = [
+  'phone,name,email,company',
+  '+5511999999999,Joao Silva,joao@email.com,Empresa XYZ',
+].join('\n');
+
+function downloadCsvTemplate() {
+  const blob = new Blob([CSV_TEMPLATE], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'modelo-contatos.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Accepts common PT-BR header aliases alongside the canonical English names
+// so a user typing "telefone" instead of "phone" doesn't silently get zero
+// valid rows.
+const HEADER_ALIASES: Record<string, 'phone' | 'name' | 'email' | 'company'> = {
+  phone: 'phone',
+  telefone: 'phone',
+  tel: 'phone',
+  celular: 'phone',
+  whatsapp: 'phone',
+  name: 'name',
+  nome: 'name',
+  email: 'email',
+  'e-mail': 'email',
+  company: 'company',
+  empresa: 'company',
+};
 
 interface ImportModalProps {
   open: boolean;
@@ -32,7 +64,8 @@ function parseCSV(text: string): ParsedRow[] {
   if (lines.length < 2) return [];
 
   const headerLine = lines[0];
-  const headers = headerLine.split(',').map((h) => h.trim().toLowerCase().replace(/["']/g, ''));
+  const rawHeaders = headerLine.split(',').map((h) => h.trim().toLowerCase().replace(/["']/g, ''));
+  const headers = rawHeaders.map((h) => HEADER_ALIASES[h] ?? h);
 
   const phoneIdx = headers.indexOf('phone');
   if (phoneIdx === -1) return [];
@@ -187,12 +220,21 @@ export function ImportModal({ open, onOpenChange, onImported }: ImportModalProps
         <DialogHeader>
           <DialogTitle className="text-white">Importar Contatos</DialogTitle>
           <DialogDescription className="text-slate-400">
-            Envie um arquivo CSV com a coluna &quot;phone&quot; (obrigatória). Colunas opcionais:
-            name, email, company.
+            Envie um arquivo CSV com a coluna &quot;phone&quot; ou &quot;telefone&quot; (obrigatória).
+            Colunas opcionais: name/nome, email, company/empresa.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
+          <button
+            type="button"
+            onClick={downloadCsvTemplate}
+            className="flex items-center gap-1.5 text-xs text-primary hover:underline"
+          >
+            <Download className="size-3.5" />
+            Baixar modelo CSV
+          </button>
+
           {/* Upload area */}
           <div
             onClick={() => fileInputRef.current?.click()}

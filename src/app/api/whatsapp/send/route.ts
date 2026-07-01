@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { sendTextMessage, sendTemplateMessage } from '@/lib/whatsapp/meta-api'
 import { decrypt, encrypt, isLegacyFormat } from '@/lib/whatsapp/encryption'
 import { supabaseAdmin } from '@/lib/flows/admin-client'
+import { runAutomationsForTrigger } from '@/lib/automations/engine'
 import {
   sanitizePhoneForMeta,
   isValidE164,
@@ -24,8 +25,11 @@ function isValidApiKey(key: string | null): boolean {
 export async function POST(request: Request) {
   try {
     // Auth: Supabase session (browser) OR api key via X-Api-Key header /
-    // ?api_key= query param (n8n / external)
+    // ?api_key= query param (n8n / external). Track which path was used —
+    // automations downstream need to tell "a human replied from the CRM"
+    // apart from "the n8n integration replied".
     let userId: string
+    let sentByCrm: boolean
     const { searchParams } = new URL(request.url)
     const apiKey =
       request.headers.get('X-Api-Key') ??
@@ -45,6 +49,7 @@ export async function POST(request: Request) {
         )
       }
       userId = cfg.user_id
+      sentByCrm = false
     } else {
       const supabase = await createClient()
       const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -52,6 +57,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
       userId = user.id
+      sentByCrm = true
     }
 
     // All DB operations use admin client with explicit user_id filters
@@ -306,6 +312,26 @@ export async function POST(request: Request) {
         updated_at: new Date().toISOString(),
       })
       .eq('id', conversation_id)
+
+    // Notify automations that a message was sent — lets an n8n integration
+    // tell "a human replied from the CRM" (sent_by_crm=true) apart from its
+    // own replies (sent_by_crm=false) and react (e.g. pause its AI agent).
+    // Awaited: Cloudflare Workers kills background promises once the
+    // response is sent, and runAutomationsForTrigger never throws.
+    await runAutomationsForTrigger({
+      userId,
+      triggerType: 'message_sent',
+      contactId: contact.id,
+      context: {
+        message_text: content_text || null,
+        conversation_id,
+        contact_name: contact.name,
+        contact_phone: contact.phone,
+        message_type,
+        media_url: media_url || null,
+        sent_by_crm: sentByCrm,
+      },
+    })
 
     // Pause any active Flow run for this contact — the agent stepping
     // in is the strongest "yield, human is here" signal. See PR #2

@@ -48,6 +48,12 @@ export interface AutomationContext {
   raw_contact?: Record<string, unknown>
   /** WhatsApp phone number metadata (phone_number_id, display_phone_number). */
   raw_metadata?: Record<string, unknown>
+  /**
+   * For message_sent trigger: true when sent by a logged-in CRM user
+   * (session auth), false when sent via the X-Api-Key integration (n8n).
+   * Lets an external agent detect "a human took over" and pause itself.
+   */
+  sent_by_crm?: boolean
 }
 
 export interface DispatchInput {
@@ -561,6 +567,7 @@ function interpolate(s: string, args: ExecuteArgs): string {
       if (prop === 'text') return String(args.context.message_text ?? '')
       if (prop === 'type') return String(args.context.message_type ?? 'text')
       if (prop === 'media_url') return String(args.context.media_url ?? '')
+      if (prop === 'sent_by_crm') return String(args.context.sent_by_crm ?? false)
     }
     if (ns === 'contact') {
       if (prop === 'name') return String(args.context.contact_name ?? '')

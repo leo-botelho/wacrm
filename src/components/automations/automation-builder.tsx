@@ -116,6 +116,11 @@ const TRIGGER_OPTIONS: { value: AutomationTriggerType; label: string; hint: stri
   { value: "conversation_assigned", label: "Conversa Atribuída", hint: "Quando atribuída a um agente" },
   { value: "tag_added", label: "Tag Adicionada", hint: "Quando uma tag é adicionada a um contato" },
   { value: "time_based", label: "Baseado em Tempo", hint: "Em um agendamento recorrente" },
+  {
+    value: "message_sent",
+    label: "Mensagem Enviada",
+    hint: "Toda mensagem enviada (pelo CRM ou pela API) — o payload do webhook inclui sent_by_crm (true/false)",
+  },
 ]
 
 function cid(): string {

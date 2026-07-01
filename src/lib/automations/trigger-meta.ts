@@ -35,6 +35,10 @@ export const TRIGGER_META: Record<AutomationTriggerType, TriggerMeta> = {
     label: 'Baseado em Tempo',
     pillClass: 'border-slate-500/30 bg-slate-500/10 text-slate-300',
   },
+  message_sent: {
+    label: 'Mensagem Enviada',
+    pillClass: 'border-green-500/30 bg-green-500/10 text-green-300',
+  },
 }
 
 export function triggerMeta(t: AutomationTriggerType | string): TriggerMeta {
