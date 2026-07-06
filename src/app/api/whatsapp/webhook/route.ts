@@ -666,6 +666,7 @@ async function processMessage(
         raw_message: message as unknown as Record<string, unknown>,
         raw_contact: contact as unknown as Record<string, unknown>,
         raw_metadata: metadata as unknown as Record<string, unknown>,
+        from_me: false,
       },
     })
   }

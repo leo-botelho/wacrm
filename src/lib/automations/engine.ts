@@ -54,6 +54,15 @@ export interface AutomationContext {
    * Lets an external agent detect "a human took over" and pause itself.
    */
   sent_by_crm?: boolean
+  /**
+   * Direction flag present on every message-related trigger: true for
+   * outbound (message_sent — sent by the business, via CRM or API),
+   * false for inbound (new_message_received / keyword_match / etc — the
+   * customer wrote in). Mirrors the from_me convention from other
+   * WhatsApp APIs, so both trigger types can share one n8n webhook and
+   * branch on direction there.
+   */
+  from_me?: boolean
 }
 
 export interface DispatchInput {
@@ -604,6 +613,7 @@ function interpolate(s: string, args: ExecuteArgs): string {
       if (prop === 'type') return String(args.context.message_type ?? 'text')
       if (prop === 'media_url') return String(args.context.media_url ?? '')
       if (prop === 'sent_by_crm') return String(args.context.sent_by_crm ?? false)
+      if (prop === 'from_me') return String(args.context.from_me ?? false)
     }
     if (ns === 'contact') {
       if (prop === 'name') return String(args.context.contact_name ?? '')

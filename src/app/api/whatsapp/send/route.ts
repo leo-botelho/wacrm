@@ -330,6 +330,7 @@ export async function POST(request: Request) {
         message_type,
         media_url: media_url || null,
         sent_by_crm: sentByCrm,
+        from_me: true,
       },
     })
 
