@@ -44,6 +44,13 @@ interface WhatsAppMessage {
     button_reply?: { id: string; title: string }
     list_reply?: { id: string; title: string; description?: string }
   }
+  /**
+   * Set when the customer taps a quick-reply button on a template
+   * message (distinct from `interactive`, which is for buttons/lists on
+   * messages sent via the interactive message API). No stable id — Meta
+   * only gives back the button's display text, echoed in both fields.
+   */
+  button?: { text: string; payload?: string }
   /** Present when the customer swipe-replies to one of our messages. */
   context?: { id: string }
 }
@@ -789,6 +796,11 @@ async function parseMessageContent(
 
     case 'reaction':
       return { ...empty, contentText: message.reaction?.emoji || null }
+
+    case 'button':
+      // Quick-reply tap on a template message. No stable id like
+      // `interactive` gets — just show the button's own text.
+      return { ...empty, contentText: message.button?.text || null }
 
     case 'interactive': {
       // The customer tapped a reply button or a list row on a message
