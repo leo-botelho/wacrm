@@ -77,6 +77,7 @@ export async function POST(request: Request) {
       content_text,
       media_url,
       template_name,
+      template_language,
       template_params,
       reply_to_message_id,
     } = body
@@ -214,6 +215,7 @@ export async function POST(request: Request) {
           accessToken,
           to: phone,
           templateName: template_name,
+          language: template_language,
           params: template_params || [],
           contextMessageId,
         })
@@ -330,6 +332,7 @@ export async function POST(request: Request) {
         message_type,
         media_url: media_url || null,
         sent_by_crm: sentByCrm,
+        from_me: true,
       },
     })
 
