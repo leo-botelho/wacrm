@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "main": ".open-next/worker.js",
-  "name": "metazap",
+  "name": "wacrm",
   "compatibility_date": "2025-03-01",
   // nodejs_compat: lets the Worker use Node.js built-ins that Next.js
   //   and its deps reach for at runtime.
@@ -19,7 +19,7 @@
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
-      "service": "metazap"
+      "service": "wacrm"
     }
   ]
 }
