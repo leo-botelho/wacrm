@@ -25,7 +25,7 @@ export function ReplyQuote({
   return (
     <div
       className={cn(
-        "flex items-start gap-2 border-l-2 border-primary px-2 py-1",
+        "flex min-w-0 items-start gap-2 overflow-hidden border-l-2 border-primary px-2 py-1",
         isChip
           ? "rounded-md bg-slate-800/80"
           : "mb-1.5 rounded-md bg-black/20",
