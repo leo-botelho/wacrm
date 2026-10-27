@@ -1,6 +1,14 @@
-# WORKLOG — wacrm
+# WORKLOG — FlowJob
 
 Entradas mais recentes no topo.
+
+## 2026-10-27 — Rebrand FlowJob, fase 2: nomes técnicos
+
+- `package.json`/`package-lock.json`: `name` = `flowjob`. README e WORKLOG com o novo título.
+- Chave de API externa: novo `src/lib/api-key.ts` (`FLOWJOB_API_KEY`, com fallback para `WACRM_API_KEY`), usado por `middleware.ts`, `/api/whatsapp/send` e `/api/whatsapp/media/[mediaId]`. Duas cópias locais de `isValidApiKey` removidas.
+- Tema: chave do localStorage `flowjob.theme`, com leitura de `wacrm.theme` no script de boot (`layout.tsx`) e em `use-theme.tsx`.
+- **Mantido de propósito:** `wrangler.jsonc` (`wacrm`) — renomear o Worker exige recriar secrets e mover o domínio. Links do GitHub aguardam o rename do repositório.
+- Typecheck sem erros novos; mesmos 23 testes que já falhavam antes.
 
 ## 2026-10-27 — Rebrand FlowJob, fase 1: logo e textos visíveis
 

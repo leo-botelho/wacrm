@@ -25,7 +25,10 @@ export type ThemeId = (typeof THEME_IDS)[number];
 
 export const DEFAULT_THEME: ThemeId = "violet";
 
-export const STORAGE_KEY = "wacrm.theme";
+export const STORAGE_KEY = "flowjob.theme";
+
+/** Pre-rebrand key. Read as a fallback so saved themes survive the rename. */
+export const LEGACY_STORAGE_KEY = "wacrm.theme";
 
 export interface ThemeMeta {
   id: ThemeId;

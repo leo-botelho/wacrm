@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { isValidApiKey } from '@/lib/api-key'
 import { createClient } from '@/lib/supabase/server'
 import { sendTextMessage, sendTemplateMessage } from '@/lib/whatsapp/meta-api'
 import { decrypt, encrypt, isLegacyFormat } from '@/lib/whatsapp/encryption'
@@ -15,12 +16,6 @@ import {
   rateLimitResponse,
   RATE_LIMITS,
 } from '@/lib/rate-limit'
-
-function isValidApiKey(key: string | null): boolean {
-  const expected = process.env.WACRM_API_KEY
-  if (!expected || !key) return false
-  return key.trim() === expected.trim()
-}
 
 export async function POST(request: Request) {
   try {

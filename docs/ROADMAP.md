@@ -20,17 +20,17 @@ O nome do produto passa a ser **FlowJob**. Isso vem antes do App Review da Meta 
 - [ ] E-mails transacionais do Supabase Auth (Supabase → Authentication → Email Templates) e nome do remetente
 - [x] Páginas legais: nome FlowJob aplicado em `/privacidade` e `/termos` (restam razão social, CNPJ, e-mail, foro)
 
-### 1.3 Nomes técnicos (hoje `wacrm`) — mudar com cuidado
-| Onde | Hoje | Observação |
-|---|---|---|
-| `package.json` `name` | `wacrm` | seguro renomear |
-| `wrangler.jsonc` `name` e `service` | `wacrm` | **renomear troca o Worker publicado**; combinar com domínio/rotas e atualizar o deploy |
-| Variável `WACRM_API_KEY` | usada em `middleware.ts`, `send`, `media` | **quebra integrações (n8n etc.)**; aceitar as duas (`FLOWJOB_API_KEY` e a antiga) durante a transição |
-| `localStorage` `wacrm.theme` (`themes.ts`) | `wacrm.theme` | renomear faz o usuário perder o tema salvo uma vez; migrar lendo a chave antiga |
-| `.env.local.example` | menciona `wacrm.tech` | atualizar para o domínio novo |
-| `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `.github/*` | `wacrm` / `ArnasDon/wacrm` | os links apontam para o repositório de origem (fork); trocar para o repositório próprio |
-| Repositório GitHub | `leo-botelho/wacrm` | renomear o repo e atualizar o `git remote` |
-| Projeto Supabase | `MetaZap` | só rótulo no painel; opcional |
+### 1.3 Nomes técnicos (antes `wacrm`)
+| Onde | Estado |
+|---|---|
+| `package.json` / `package-lock.json` `name` | [x] `flowjob` |
+| Variável de API | [x] `FLOWJOB_API_KEY`; `WACRM_API_KEY` continua aceita como fallback (`src/lib/api-key.ts`). **Ação sua:** criar `FLOWJOB_API_KEY` no Worker e, quando as integrações (n8n) usarem a nova, apagar a antiga e remover o fallback |
+| `localStorage` do tema | [x] `flowjob.theme`, lendo `wacrm.theme` como fallback (o tema salvo não se perde) |
+| `README.md` título, `WORKLOG.md` título | [x] |
+| `.env.local.example` | [x] `FLOWJOB_API_KEY` documentada e domínio de produção |
+| `wrangler.jsonc` `name` e `service` (`wacrm`) | [ ] **mantido de propósito.** Renomear cria outro Worker: os secrets (`ENCRYPTION_KEY`, `META_APP_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`…) e o domínio `crm.smartskillshub.com.br` ficam no Worker antigo e teriam de ser recriados/movidos. Fazer só com janela de manutenção |
+| Repositório GitHub (`leo-botelho/wacrm`) e links `ArnasDon/wacrm` em `README`, `CONTRIBUTING`, `.github/` | [ ] renomear o repositório pelo GitHub (Settings → Rename) e depois trocar os links |
+| Projeto Supabase (`MetaZap`) | [ ] opcional, só rótulo no painel |
 
 ### 1.4 Fora do código (Meta e infraestrutura)
 - [ ] Nome de exibição do app Meta (App Settings → Basic) e ícone 1024×1024
@@ -40,7 +40,7 @@ O nome do produto passa a ser **FlowJob**. Isso vem antes do App Review da Meta 
 
 ### 1.5 Pronto quando
 - Nenhum texto visível ao usuário diz "MetaZap" ou "wacrm" (`grep -ri "metazap\|wacrm"` só retorna o que for intencional, como a chave antiga em modo de compatibilidade).
-- Integrações existentes continuam funcionando com a chave antiga.
+- Integrações existentes continuam funcionando com a chave antiga (fallback ativo).
 
 ## 2. Meta Tech Provider (em andamento)
 
