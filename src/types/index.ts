@@ -138,6 +138,7 @@ export interface WhatsAppConfig {
   verify_token?: string;
   status: 'connected' | 'disconnected';
   connected_at?: string;
+  connection_type?: 'manual' | 'embedded_signup';
 }
 
 export interface MessageTemplate {

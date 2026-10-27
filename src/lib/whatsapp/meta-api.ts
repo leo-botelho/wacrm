@@ -9,7 +9,7 @@
  * instead of a runtime rejection from Meta.
  */
 
-const META_API_VERSION = 'v21.0'
+export const META_API_VERSION = 'v23.0'
 const META_API_BASE = `https://graph.facebook.com/${META_API_VERSION}`
 
 export interface MetaSendResult {
@@ -63,6 +63,84 @@ export async function verifyPhoneNumber(
     await throwMetaError(response, `Meta API error: ${response.status}`)
   }
   return response.json()
+}
+
+// ============================================================
+// Embedded Signup / Tech Provider onboarding
+// ============================================================
+
+/**
+ * Exchange the short-lived `code` returned by the Embedded Signup
+ * FB.login() call for a business access token.
+ */
+export async function exchangeCodeForToken(args: {
+  code: string
+  appId: string
+  appSecret: string
+}): Promise<string> {
+  const { code, appId, appSecret } = args
+  const params = new URLSearchParams({
+    client_id: appId,
+    client_secret: appSecret,
+    code,
+  })
+  const response = await fetch(`${META_API_BASE}/oauth/access_token?${params}`)
+  if (!response.ok) {
+    await throwMetaError(response, `Meta token exchange failed: ${response.status}`)
+  }
+  const data = (await response.json()) as { access_token?: string }
+  if (!data.access_token) throw new Error('Meta did not return an access token')
+  return data.access_token
+}
+
+/** Facebook user id that owns a token (via /debug_token, app-token auth). */
+export async function getTokenUserId(args: {
+  inputToken: string
+  appId: string
+  appSecret: string
+}): Promise<string | null> {
+  const { inputToken, appId, appSecret } = args
+  const params = new URLSearchParams({
+    input_token: inputToken,
+    access_token: `${appId}|${appSecret}`,
+  })
+  const response = await fetch(`${META_API_BASE}/debug_token?${params}`)
+  if (!response.ok) return null
+  const data = (await response.json()) as { data?: { user_id?: string } }
+  return data.data?.user_id ?? null
+}
+
+/** Subscribe this app to the WABA's webhook events (messages, statuses…). */
+export async function subscribeAppToWaba(args: {
+  wabaId: string
+  accessToken: string
+}): Promise<void> {
+  const response = await fetch(`${META_API_BASE}/${args.wabaId}/subscribed_apps`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${args.accessToken}` },
+  })
+  if (!response.ok) {
+    await throwMetaError(response, `Meta subscribed_apps failed: ${response.status}`)
+  }
+}
+
+/** Register a phone number on Cloud API with a 6-digit two-step PIN. */
+export async function registerPhoneNumber(args: {
+  phoneNumberId: string
+  accessToken: string
+  pin: string
+}): Promise<void> {
+  const response = await fetch(`${META_API_BASE}/${args.phoneNumberId}/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${args.accessToken}`,
+    },
+    body: JSON.stringify({ messaging_product: 'whatsapp', pin: args.pin }),
+  })
+  if (!response.ok) {
+    await throwMetaError(response, `Meta register failed: ${response.status}`)
+  }
 }
 
 // ============================================================

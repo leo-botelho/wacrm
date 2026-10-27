@@ -31,7 +31,7 @@ export async function GET() {
 
     const { data: config, error: configError } = await supabase
       .from('whatsapp_config')
-      .select('phone_number_id, access_token, status')
+      .select('phone_number_id, access_token, status, connection_type')
       .eq('user_id', user.id)
       .maybeSingle()
 
@@ -49,6 +49,19 @@ export async function GET() {
           connected: false,
           reason: 'no_config',
           message: 'No WhatsApp configuration saved yet. Fill in the form and click Save Configuration.',
+        },
+        { status: 200 }
+      )
+    }
+
+    // Deauthorized via Meta (token wiped by /api/meta/deauthorize).
+    if (!config.access_token) {
+      return NextResponse.json(
+        {
+          connected: false,
+          reason: 'deauthorized',
+          message:
+            'O acesso foi revogado na Meta. Conecte novamente para voltar a enviar e receber mensagens.',
         },
         { status: 200 }
       )

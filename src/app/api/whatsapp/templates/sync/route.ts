@@ -30,7 +30,7 @@ import { decrypt } from '@/lib/whatsapp/encryption'
  *     manually.
  */
 
-const META_API_VERSION = 'v21.0'
+const META_API_VERSION = 'v23.0'
 const META_API_BASE = `https://graph.facebook.com/${META_API_VERSION}`
 
 interface MetaTemplateComponent {

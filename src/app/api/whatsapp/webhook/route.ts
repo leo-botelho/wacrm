@@ -95,6 +95,16 @@ export async function GET(request: Request) {
       )
     }
 
+    // App-level verify token (Embedded Signup / Tech Provider setup): one
+    // webhook for the whole Meta app, so it isn't tied to a user's config.
+    const appVerifyToken = process.env.META_WEBHOOK_VERIFY_TOKEN
+    if (appVerifyToken && verifyToken === appVerifyToken) {
+      return new Response(challenge, {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain' },
+      })
+    }
+
     // Fetch all whatsapp configs to check verify tokens
     const { data: configs, error: configError } = await supabaseAdmin()
       .from('whatsapp_config')
