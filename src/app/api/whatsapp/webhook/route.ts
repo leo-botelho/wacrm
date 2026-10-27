@@ -676,7 +676,7 @@ async function processMessage(
         contact_phone: contactRecord.phone ?? senderPhone,
         message_type: contentType,
         media_url: mediaUrl
-          ? `${process.env.NEXT_PUBLIC_SITE_URL}${mediaUrl}`
+          ? `${(process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/$/, '')}${mediaUrl}`
           : null,
         media_download_url:
           (message as unknown as Record<string, Record<string, string>>)[message.type]?.url ?? null,
