@@ -2,6 +2,13 @@
 
 Entradas mais recentes no topo.
 
+## 2026-10-27 — Rebrand FlowJob, fase 1: logo e textos visíveis
+
+- Logo FlowJob (monograma F em fluxo, roxo `#7c3aed`): `public/brand/flowjob-icon.svg` e `flowjob-icon-1024.png` (transparente, 20 KB, para o app Meta). `Logo`/`LogoMark` em `src/components/icons/logo.tsx` e favicon `src/app/icon.svg` trocados.
+- "MetaZap CRM" → "FlowJob" em `layout.tsx` (título) e `sidebar.tsx`; nome aplicado nas páginas legais.
+- **Não feito (depende de decisão):** nomes técnicos `wacrm` (`package.json`, `wrangler.jsonc`, `WACRM_API_KEY`, chave `wacrm.theme`, repositório) e itens fora do código (app Meta, domínio, e-mails do Supabase Auth). Ver `docs/ROADMAP.md` item 1.3/1.4.
+- Migration `013_embedded_signup.sql` aplicada pela dona.
+
 ## 2026-10-27 — Roadmap criado: rebrand para FlowJob (nada implementado)
 
 Criado `docs/ROADMAP.md` com o rebrand como item 1 (antes do App Review da Meta). Inventário feito: o nome visível hoje é "MetaZap CRM" (`layout.tsx`, `sidebar.tsx`, `logo.tsx`) e o nome técnico é `wacrm` (`package.json`, `wrangler.jsonc`, `WACRM_API_KEY`, chave `wacrm.theme` no localStorage, links do repositório de origem). Renomear o Worker e a variável `WACRM_API_KEY` tem impacto em deploy e integrações, então o roadmap prevê transição com as duas chaves. Logo ainda não foi criado.

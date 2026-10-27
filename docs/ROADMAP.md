@@ -7,18 +7,18 @@ Atualizado em 2026-10-27. Itens em ordem de prioridade; marque `[x]` ao concluir
 O nome do produto passa a ser **FlowJob**. Isso vem antes do App Review da Meta porque o nome do app, o logo, as páginas legais e a tela de consentimento do Embedded Signup precisam já refletir a marca final.
 
 ### 1.1 Identidade visual
-- [ ] Definir o conceito do logo (hoje: raio branco em quadrado roxo `#7c3aed`, herdado de "MetaZap"). Gerar variações: marca completa (ícone + nome), só ícone, versão clara e escura.
-- [ ] Exportar os arquivos: SVG, PNG 1024×1024 (ícone do app Meta, exigido no App Review), favicon.
+- [x] Conceito do logo definido: monograma F em traço contínuo com nó, quadrado roxo `#7c3aed` (opção A). Falta variação clara/escura e lockup com nome, se necessário.
+- [x] Arquivos exportados em `public/brand/`: SVG e PNG 1024×1024 transparente (ícone do app Meta); favicon em `src/app/icon.svg`.
 - [ ] Definir paleta e confirmar se o roxo atual (`themes.ts`) continua.
 
 ### 1.2 Textos visíveis no sistema (hoje dizem "MetaZap CRM")
-- [ ] `src/app/layout.tsx` — `title.default` e `title.template`
-- [ ] `src/components/layout/sidebar.tsx` — nome ao lado do logo
-- [ ] `src/components/icons/logo.tsx` — componentes `Logo` e `LogoMark` + comentário
-- [ ] `src/app/icon.svg` — favicon
-- [ ] Telas de login, cadastro e recuperação de senha (usam `LogoMark`; conferir textos)
+- [x] `src/app/layout.tsx` — `title.default` e `title.template`
+- [x] `src/components/layout/sidebar.tsx` — nome ao lado do logo
+- [x] `src/components/icons/logo.tsx` — componentes `Logo` e `LogoMark` + comentário
+- [x] `src/app/icon.svg` — favicon
+- [x] Telas de login, cadastro e recuperação de senha (usam `LogoMark`, já com o novo glifo; sem texto com o nome antigo)
 - [ ] E-mails transacionais do Supabase Auth (Supabase → Authentication → Email Templates) e nome do remetente
-- [ ] Páginas legais: trocar `[NOME DO PRODUTO]` em `/privacidade` e `/termos`
+- [x] Páginas legais: nome FlowJob aplicado em `/privacidade` e `/termos` (restam razão social, CNPJ, e-mail, foro)
 
 ### 1.3 Nomes técnicos (hoje `wacrm`) — mudar com cuidado
 | Onde | Hoje | Observação |
@@ -47,8 +47,8 @@ O nome do produto passa a ser **FlowJob**. Isso vem antes do App Review da Meta 
 Código pronto (Embedded Signup, callbacks, páginas legais). Falta o lado Meta e o texto jurídico.
 
 - [x] Embedded Signup, callbacks de deauthorize e exclusão de dados, token de verificação do app
-- [ ] Aplicar a migration `013_embedded_signup.sql`
-- [ ] Rebrand FlowJob concluído (item 1)
+- [x] Migration `013_embedded_signup.sql` aplicada
+- [ ] Rebrand FlowJob concluído (item 1: faltam nomes técnicos e itens fora do código)
 - [ ] Revisão jurídica e preenchimento das páginas `/privacidade`, `/termos`, `/exclusao-de-dados`
 - [ ] Business Verification no Meta Business Portfolio
 - [ ] App em modo Live, `config_id` do Embedded Signup, env vars de produção

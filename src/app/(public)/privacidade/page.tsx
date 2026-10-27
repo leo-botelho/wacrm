@@ -10,7 +10,7 @@ export default function PrivacyPage() {
       <h1>Política de Privacidade</h1>
       <p>Última atualização: [DATA]</p>
       <p>
-        Esta política descreve como o [NOME DO PRODUTO] (&quot;nós&quot;), operado por
+        Esta política descreve como o FlowJob (&quot;nós&quot;), operado por
         [RAZÃO SOCIAL], CNPJ [CNPJ], trata dados pessoais, em conformidade com a Lei
         Geral de Proteção de Dados (Lei 13.709/2018 — LGPD).
       </p>

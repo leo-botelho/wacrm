@@ -10,7 +10,7 @@ export default function TermsPage() {
       <h1>Termos de Uso</h1>
       <p>Última atualização: [DATA]</p>
       <p>
-        Estes termos regulam o uso do [NOME DO PRODUTO], operado por [RAZÃO SOCIAL],
+        Estes termos regulam o uso do FlowJob, operado por [RAZÃO SOCIAL],
         CNPJ [CNPJ]. Ao criar uma conta ou conectar um número de WhatsApp, você concorda
         com eles.
       </p>
