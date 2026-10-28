@@ -4,7 +4,8 @@ import { createClient } from '@supabase/supabase-js'
 export const metadata: Metadata = { title: 'Exclusão de dados' }
 export const dynamic = 'force-dynamic'
 
-// RASCUNHO: preencher [E-MAIL] antes de submeter o app à revisão da Meta.
+// Página de status do callback /api/meta/data-deletion. Os pedidos gerais de
+// exclusão seguem o fluxo do site institucional.
 export default async function DataDeletionPage({
   searchParams,
 }: {
@@ -58,12 +59,15 @@ export default async function DataDeletionPage({
           &quot;Redefinir Configuração&quot;.
         </li>
         <li>
-          <strong>Conta, contatos e conversas:</strong> envie um e-mail para [E-MAIL] a
-          partir do endereço cadastrado. Atendemos em até 15 dias.
+          <strong>Conta, contatos e conversas:</strong> siga as instruções da página{' '}
+          <a href="https://smartskillshub.com.br/exclusao-dados.html">
+            Exclusão de dados da Smart Skills
+          </a>
+          . Os pedidos são atendidos em até 15 dias úteis após a confirmação de identidade.
         </li>
       </ul>
       <p>
-        Veja também a <a href="/privacidade">Política de Privacidade</a>.
+        Veja também a <a href="https://smartskillshub.com.br/privacidade.html">Política de Privacidade</a>.
       </p>
     </>
   )

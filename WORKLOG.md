@@ -2,6 +2,12 @@
 
 Entradas mais recentes no topo.
 
+## 2026-10-28 — Páginas legais: usar as do site smartskillshub
+
+- Lidas as páginas do site (privacidade, termos, exclusão de dados): cobrem só o agente de IA, não o FlowJob (CRM em que empresas conectam o WhatsApp). Faltam papéis controlador/operador, Embedded Signup/token, regras da Meta (opt-in, spam) e exclusão pela Meta. Texto pronto para colar em `docs/ajustes-paginas-legais.md`.
+- No app, `/privacidade` e `/termos` agora redirecionam para o site (uma única versão); `/exclusao-de-dados` ficou como página de status do callback `/api/meta/data-deletion`, apontando para a página do site.
+- **Pendência da dona:** colar os blocos no site e cadastrar as URLs no app da Meta.
+
 ## 2026-10-27 — Rebrand FlowJob, fase 2: nomes técnicos
 
 - `package.json`/`package-lock.json`: `name` = `flowjob`. README e WORKLOG com o novo título.

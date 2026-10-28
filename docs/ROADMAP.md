@@ -49,7 +49,7 @@ Código pronto (Embedded Signup, callbacks, páginas legais). Falta o lado Meta 
 - [x] Embedded Signup, callbacks de deauthorize e exclusão de dados, token de verificação do app
 - [x] Migration `013_embedded_signup.sql` aplicada
 - [ ] Rebrand FlowJob concluído (item 1: faltam nomes técnicos e itens fora do código)
-- [ ] Revisão jurídica e preenchimento das páginas `/privacidade`, `/termos`, `/exclusao-de-dados`
+- [ ] Páginas legais: usar as do site (`smartskillshub.com.br/privacidade.html`, `termos.html`, `exclusao-dados.html`) e acrescentar os blocos do FlowJob de `docs/ajustes-paginas-legais.md`; revisão jurídica. No app, `/privacidade` e `/termos` redirecionam para o site e `/exclusao-de-dados` só mostra o status do callback
 - [ ] Business Verification no Meta Business Portfolio
 - [ ] App em modo Live, `config_id` do Embedded Signup, env vars de produção
 - [ ] App Review: Advanced Access em `whatsapp_business_management` e `whatsapp_business_messaging`, com screencast
