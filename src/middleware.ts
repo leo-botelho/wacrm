@@ -1,6 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { isValidApiKey } from '@/lib/api-key'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -59,7 +58,8 @@ export async function middleware(request: NextRequest) {
       request.headers.get('X-Api-Key') ??
       request.headers.get('x-api-key') ??
       request.nextUrl.searchParams.get('api_key')
-    const hasValidApiKey = isValidApiKey(apiKey)
+    const expected = process.env.WACRM_API_KEY
+    const hasValidApiKey = !!apiKey && !!expected && apiKey.trim() === expected.trim()
     if (!hasValidApiKey) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

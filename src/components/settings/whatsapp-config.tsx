@@ -28,10 +28,6 @@ import {
   AccordionContent,
 } from '@/components/ui/accordion';
 import type { WhatsAppConfig as WhatsAppConfigType } from '@/types';
-import {
-  EmbeddedSignupButton,
-  embeddedSignupAvailable,
-} from './embedded-signup-button';
 
 const MASKED_TOKEN = '••••••••••••••••';
 
@@ -335,29 +331,6 @@ export function WhatsAppConfig() {
                 'Configure suas credenciais da API Meta abaixo para conectar sua conta do WhatsApp Business.'}
           </AlertDescription>
         </Alert>
-
-        {/* Embedded Signup (Meta Tech Provider) */}
-        {embeddedSignupAvailable && (
-          <Card className="bg-slate-900 border-slate-700 ring-0 ring-transparent">
-            <CardHeader>
-              <CardTitle className="text-white">Conexão automática</CardTitle>
-              <CardDescription className="text-slate-400">
-                Conecte seu número do WhatsApp Business em poucos cliques, sem copiar tokens.
-                Você será levado ao fluxo oficial da Meta.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <EmbeddedSignupButton
-                onConnected={async () => {
-                  if (user) await fetchConfig(user.id);
-                }}
-              />
-              <p className="mt-3 text-xs text-slate-500">
-                Prefere configurar manualmente? Use o formulário abaixo.
-              </p>
-            </CardContent>
-          </Card>
-        )}
 
         {/* API Credentials */}
         <Card className="bg-slate-900 border-slate-700 ring-0 ring-transparent">

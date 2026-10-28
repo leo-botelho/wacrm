@@ -4,12 +4,7 @@ import Script from "next/script";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { ThemeProvider } from "@/hooks/use-theme";
-import {
-  DEFAULT_THEME,
-  LEGACY_STORAGE_KEY,
-  STORAGE_KEY,
-  THEME_IDS,
-} from "@/lib/themes";
+import { DEFAULT_THEME, STORAGE_KEY, THEME_IDS } from "@/lib/themes";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -18,8 +13,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "FlowJob",
-    template: "%s — FlowJob",
+    default: "MetaZap CRM",
+    template: "%s — MetaZap CRM",
   },
   description: "CRM para WhatsApp.",
   robots: {
@@ -56,7 +51,7 @@ const THEME_BOOT_SCRIPT = `
     var STORAGE_KEY = ${JSON.stringify(STORAGE_KEY)};
     var DEFAULT = ${JSON.stringify(DEFAULT_THEME)};
     var ALLOWED = ${JSON.stringify(THEME_IDS)};
-    var saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(${JSON.stringify(LEGACY_STORAGE_KEY)});
+    var saved = localStorage.getItem(STORAGE_KEY);
     var theme = ALLOWED.indexOf(saved) !== -1 ? saved : DEFAULT;
     document.documentElement.dataset.theme = theme;
   } catch (_e) {

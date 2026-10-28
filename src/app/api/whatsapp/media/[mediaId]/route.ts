@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server'
-import { isValidApiKey } from '@/lib/api-key'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/flows/admin-client'
 import { getMediaUrl, downloadMedia } from '@/lib/whatsapp/meta-api'
 import { decrypt } from '@/lib/whatsapp/encryption'
+
+function isValidApiKey(key: string | null): boolean {
+  const expected = process.env.WACRM_API_KEY
+  if (!expected || !key) return false
+  return key.trim() === expected.trim()
+}
 
 export async function GET(
   request: Request,

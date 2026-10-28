@@ -1,62 +1,12 @@
-# WORKLOG — FlowJob
+# WORKLOG — wacrm
 
 Entradas mais recentes no topo.
 
-## 2026-10-28 — Páginas legais: usar as do site smartskillshub
+## 2026-10-28 — Repositório passa a ser só do Borgo; FlowJob mudou para `leo-botelho/flowjob`
 
-- Lidas as páginas do site (privacidade, termos, exclusão de dados): cobrem só o agente de IA, não o FlowJob (CRM em que empresas conectam o WhatsApp). Faltam papéis controlador/operador, Embedded Signup/token, regras da Meta (opt-in, spam) e exclusão pela Meta. Texto pronto para colar em `docs/ajustes-paginas-legais.md`.
-- No app, `/privacidade` e `/termos` agora redirecionam para o site (uma única versão); `/exclusao-de-dados` ficou como página de status do callback `/api/meta/data-deletion`, apontando para a página do site.
-- **Pendência da dona:** colar os blocos no site e cadastrar as URLs no app da Meta.
-
-## 2026-10-27 — Rebrand FlowJob, fase 2: nomes técnicos
-
-- `package.json`/`package-lock.json`: `name` = `flowjob`. README e WORKLOG com o novo título.
-- Chave de API externa: novo `src/lib/api-key.ts` (`FLOWJOB_API_KEY`, com fallback para `WACRM_API_KEY`), usado por `middleware.ts`, `/api/whatsapp/send` e `/api/whatsapp/media/[mediaId]`. Duas cópias locais de `isValidApiKey` removidas.
-- Tema: chave do localStorage `flowjob.theme`, com leitura de `wacrm.theme` no script de boot (`layout.tsx`) e em `use-theme.tsx`.
-- **Mantido de propósito:** `wrangler.jsonc` (`wacrm`) — renomear o Worker exige recriar secrets e mover o domínio. Links do GitHub aguardam o rename do repositório.
-- Typecheck sem erros novos; mesmos 23 testes que já falhavam antes.
-
-## 2026-10-27 — Rebrand FlowJob, fase 1: logo e textos visíveis
-
-- Logo FlowJob (monograma F em fluxo, roxo `#7c3aed`): `public/brand/flowjob-icon.svg` e `flowjob-icon-1024.png` (transparente, 20 KB, para o app Meta). `Logo`/`LogoMark` em `src/components/icons/logo.tsx` e favicon `src/app/icon.svg` trocados.
-- "MetaZap CRM" → "FlowJob" em `layout.tsx` (título) e `sidebar.tsx`; nome aplicado nas páginas legais.
-- **Não feito (depende de decisão):** nomes técnicos `wacrm` (`package.json`, `wrangler.jsonc`, `WACRM_API_KEY`, chave `wacrm.theme`, repositório) e itens fora do código (app Meta, domínio, e-mails do Supabase Auth). Ver `docs/ROADMAP.md` item 1.3/1.4.
-- Migration `013_embedded_signup.sql` aplicada pela dona.
-
-## 2026-10-27 — Roadmap criado: rebrand para FlowJob (nada implementado)
-
-Criado `docs/ROADMAP.md` com o rebrand como item 1 (antes do App Review da Meta). Inventário feito: o nome visível hoje é "MetaZap CRM" (`layout.tsx`, `sidebar.tsx`, `logo.tsx`) e o nome técnico é `wacrm` (`package.json`, `wrangler.jsonc`, `WACRM_API_KEY`, chave `wacrm.theme` no localStorage, links do repositório de origem). Renomear o Worker e a variável `WACRM_API_KEY` tem impacto em deploy e integrações, então o roadmap prevê transição com as duas chaves. Logo ainda não foi criado.
-
-## 2026-10-27 — Meta Tech Provider: Embedded Signup, callbacks e páginas legais
-
-Preparação do app para virar Tech Provider (clientes conectam o número pelo fluxo oficial da Meta, sem colar token).
-
-- **Migration `013_embedded_signup.sql`** (aplicar com `supabase db push`): `whatsapp_config` ganha `connection_type`, `meta_user_id`, `registration_pin` (cifrado); tabela `meta_data_deletion_requests`; função `whatsapp_phone_in_use` (um número só pode servir uma conta).
-- **`POST /api/whatsapp/embedded-signup`**: troca o `code` por token, valida o número, assina o app no WABA (`subscribed_apps`), registra o número (best effort) e grava a config cifrada. Helpers novos em `meta-api.ts`.
-- **UI**: botão "Conectar com Facebook" em Configurações → WhatsApp (`embedded-signup-button.tsx`). Só aparece com `NEXT_PUBLIC_META_APP_ID` e `NEXT_PUBLIC_META_ES_CONFIG_ID`; o formulário manual continua.
-- **Callbacks da Meta**: `/api/meta/deauthorize` (apaga o token, status desconectado) e `/api/meta/data-deletion` (remove a config e devolve `url` + `confirmation_code`). Validam `signed_request` com HMAC (`signed-request.ts`, com testes).
-- **Webhook**: GET aceita o token de verificação do app (`META_WEBHOOK_VERIFY_TOKEN`) além dos tokens por conta.
-- **Páginas públicas** (rascunho, **revisar com jurídico e preencher os `[CAMPOS]`**): `/privacidade`, `/termos`, `/exclusao-de-dados`.
-- **Graph API** de `v21.0` para `v23.0` (`meta-api.ts` e `templates/sync`).
-- **Testes**: os 23 testes que falham (`encryption.test.ts`, `date-utils.test.ts`, `webhook-signature.test.ts`) já falhavam antes; não foram tocados.
-- **Pendências (lado Meta)**: Business Verification, app Live, `config_id` do Embedded Signup, URLs de callback/webhook no painel, App Review com Advanced Access (`whatsapp_business_management` e `whatsapp_business_messaging`) + screencast, registro como Tech Provider. Env vars em `.env.local.example`.
-
-## 2026-10-22 — Especificação: disparos externos do Smart Gest com status de entrega (nada implementado)
-
-Escrito `docs/integracao-smartgest.md`. **Só documentação**: nenhum código, schema ou migration alterado.
-
-O Smart Gest vai enviar prospecção pela Cloud API usando o mesmo número do wacrm. Ele registra cada envio
-aqui como disparo externo (`broadcasts.source = 'smartgest'`), e o módulo Disparos passa a mostrar enviado,
-entregue, lido, respondido e falhou. O wacrm devolve ao Smart Gest só os eventos desses destinatários, por
-fila durável. Lido no código: status de mensagem fora de broadcast é descartado, e o erro do status (código
-e motivo) não é gravado hoje.
-
-O wacrm atende várias contas, então a integração é **por conta** (`smartgest_integrations`: chave, segredos
-cifrados e URL de eventos próprios; a conta vem da chave assinada, nunca do corpo), **desligada por padrão** e
-liberada por `profiles.beta_features` só na conta do dono. Outras contas não mudam nem veem nada.
-
-Pontos em aberto na especificação: qual conta recebe o flag, etiquetas `prospeccao-smartgest` e
-`nao-perturbe`, número exclusivo ou compartilhado, agendador do cron.
+- O `.env.production` deste repositório foi alterado para o Supabase e o domínio do FlowJob e o build derrubou o CRM do Borgo. Rollback feito no Cloudflare da cliente.
+- Este repositório foi revertido (commits de reversão) ao estado de `146d0e0`, o último deploy bom. **Não colocar aqui nada do FlowJob** (Tech Provider, rebrand, Graph v23, migration 013).
+- Todo o trabalho do FlowJob (Embedded Signup, callbacks, rebrand, roadmap) está em `leo-botelho/flowjob`, pasta `D:epo-locallowjob`.
 
 ## 2026-09-30 — Fix: resposta (reply) estourando a caixa de diálogo no inbox
 

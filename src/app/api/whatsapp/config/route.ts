@@ -54,19 +54,6 @@ export async function GET() {
       )
     }
 
-    // Deauthorized via Meta (token wiped by /api/meta/deauthorize).
-    if (!config.access_token) {
-      return NextResponse.json(
-        {
-          connected: false,
-          reason: 'deauthorized',
-          message:
-            'O acesso foi revogado na Meta. Conecte novamente para voltar a enviar e receber mensagens.',
-        },
-        { status: 200 }
-      )
-    }
-
     // Try to decrypt the stored token with the current ENCRYPTION_KEY.
     // If this fails, the key changed (or was never consistent across envs).
     let accessToken: string

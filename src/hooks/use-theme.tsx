@@ -11,7 +11,6 @@ import {
 
 import {
   DEFAULT_THEME,
-  LEGACY_STORAGE_KEY,
   STORAGE_KEY,
   isThemeId,
   type ThemeId,
@@ -47,8 +46,7 @@ function readInitialTheme(): ThemeId {
   const fromAttr = document.documentElement.dataset.theme;
   if (isThemeId(fromAttr)) return fromAttr;
   try {
-    const stored =
-      localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEY);
     if (isThemeId(stored)) return stored;
   } catch {
     // localStorage can throw in private-browsing / sandboxed contexts.
